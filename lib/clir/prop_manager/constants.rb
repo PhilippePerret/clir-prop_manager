@@ -1,12 +1,8 @@
 module Clir
 module PropManager
+  include ClirPropManagerConstants
 
-  # --- Properties Constants ---
-
-  REQUIRED    = 1
-  DISPLAYABLE = 2
-  EDITABLE    = 4
-  REMOVABLE   = 8
-
+  LANG = 'fr'
+  
 end #/module PropManager
 end #/module Clir

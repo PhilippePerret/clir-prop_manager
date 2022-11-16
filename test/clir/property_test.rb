@@ -3,7 +3,7 @@ require "test_helper"
 class Clir::PropManagerPropertyTest < Minitest::Test
 
   def manager
-    @manager ||= Clir::PropManager::Manager.new
+    @manager ||= Clir::PropManager.new(MaClasseLambda)
   end
   def init_property_with(data)
     man = data.delete(:manager) || manager

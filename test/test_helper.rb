@@ -9,3 +9,10 @@ reporter_options = {
   slow_threshold: true, # pour signaler les tests trop longs
 }
 Minitest::Reporters.use! [Minitest::Reporters::DefaultReporter.new(reporter_options)]
+
+#
+# Une classe utilisable quand elle importe peu
+# (par exemple test des propriétés)
+class MaClasseLambda
+  DATA_PROPERTIES = []
+end

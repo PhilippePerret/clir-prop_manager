@@ -1,6 +1,7 @@
 module Clir
 module PropManager
 class Property
+  include ClirPropManagerConstants
 
   attr_reader :manager
   attr_reader :data
@@ -12,7 +13,7 @@ class Property
     @data     = data
   end
 
-  # --- Predictable Methods ---
+  # --- Predicate Methods ---
 
   def required?
     :TRUE == @isrequired ||= true_or_false(specs & REQUIRED > 0)
