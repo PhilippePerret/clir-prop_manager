@@ -33,7 +33,10 @@ class Property
 
   # --- Hard Coded Properties ---
 
-  def specs; @specs ||= data[:specs] end
+  def name;   @name   ||= data[:name]   end
+  def specs;  @specs  ||= data[:specs]  end
+  def prop;   @prop   ||= data[:prop]   end
+  def format_method; @format_method ||= data[:mformate] end
 
 end #/class Property
 end #/module PropManager

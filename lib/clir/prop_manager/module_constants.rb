@@ -8,4 +8,5 @@ module ClirPropManagerConstants
   EDITABLE    = 4
   REMOVABLE   = 8
 
+  ALL_SPECS = REQUIRED|DISPLAYABLE|EDITABLE|REMOVABLE
 end

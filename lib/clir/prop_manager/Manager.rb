@@ -9,7 +9,6 @@ end #/<< self module
 class Manager
   
   attr_reader :classe
-
   attr_reader :data_properties
   
   def initialize(classe, data_properties = nil)
@@ -26,40 +25,58 @@ class Manager
   # and :remove/:destroy)
   def prepare_instance_methods_of_class
     my = self
-    classe.define_method 'create' do
-      my.create(self)
+    classe.define_method 'create' do |options = nil|
+      my.create(self, options)
     end
-    classe.define_method 'edit' do
-      my.edit(self)
+    classe.define_method 'edit' do |options = nil|
+      my.edit(self, options)
     end
-    classe.define_method 'display' do
-      my.display(self)
+    classe.define_method 'display' do |options = nil|
+      my.display(self, options)
     end
     classe.alias_method(:show, :display)
-    classe.define_method 'remove' do
-      my.remove(self)
+    classe.define_method 'remove' do |options = nil|
+      my.remove(self, options)
     end
     classe.alias_method(:destroy, :remove)
   end
 
   # To create a instance
-  def create(instance)
+  def create(instance, options = nil)
     puts "Je dois apprendre à créer l'instance #{instance.inspect}".jaune
   end
 
-  def edit(instance)
-    puts "Je dois apprendre à éditer l'instance #{instance.inspect}.".jaune
+  def edit(instance, options = nil)
+    @editor ||= Editor.new(self)
+    @editor.edit(instance)
   end
 
-  def display(instance)
-    puts "Je dois apprendre à afficher l'instance #{instance.inspect}.".jaune
+  def display(instance, options = nil)
+    @displayer ||= Displayer.new(self)
+    @displayer.show(instance)
   end
 
-  def remove(instance)
+  def remove(instance, options = nil)
     puts "Je dois apprendre à détruire l'instance #{instance.inspect}.".jaune
   end
 
-end #/class Manager
+  # Loop on every property (as instances)
+  def each_property(&block)
+    if block_given?
+      properties.each do |property|
+        yield property
+      end
+    end
+  end
 
+  # @prop All data properties as instance of {PropManager::Property}
+  def properties
+    @properties ||= begin
+      data_properties.map do |dproperty|
+        Property.new(self, dproperty)
+      end
+    end
+  end
+end #/class Manager
 end #/module PropManager
 end #/module Clir

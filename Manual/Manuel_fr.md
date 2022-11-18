@@ -8,7 +8,7 @@ Il suffit, pour une classe donnée, de définir les propriétés de ses instance
 
 Par exemple :
 
-On définit les données :
+On définit les données de la classe `MaClasse` :
 
 ~~~ruby
 require 'clir/prop_manager'
@@ -20,7 +20,7 @@ class MaClasse
     {
       prop: :name, 
       type: :string,
-      specs:REQUIRED|DISPLAYABLE|EDITABLE|REMOVABLE,
+      specs:ALL_SPECS,
       valid_if: {
         not_empty:true, 
         min_length: 3, 
@@ -44,6 +44,8 @@ end
 
 Note : si la classe définissait ses données dans une autre constante que `DATA_PROPERTIES`, il faudrait donner cette constante en second argument de `Clir::PropManager.new`.
 
+---
+
 On peut maintenant utiliser cette méthode pour éditer les valeurs d'une instance :
 
 ~~~ruby
@@ -62,7 +64,11 @@ inst.remove
 # => Détruit l'instance
 ~~~
 
-## Définition des propriétés
+---
+
+<a name="data-properties"></a>
+
+## Données des propriétés d’instance
 
 Le bon fonctionnement du ***manager de propriété*** tient principalement à la bonne définition des propriétés. Cette définition permet de tout savoir sur la donnée et de savoir comment la gérer.
 
@@ -81,3 +87,58 @@ class MaClasse
     @@manager ||= Clir::PropManager.new(self, AUTRES_DATA)
   end
 ~~~
+
+---
+
+## Formatage de l’affichage des données
+
+La classe managée peut définir des méthodes de formatage d’affichage particulières pour chaque donnée. Par convention, ce nom doit être `f_<property name>`. Par exemple, si la propriété est **`name`** alors le nom de la méthode de mise en forme de sa valeur doit être par défaut **`f_name`**.
+
+Par exemple : 
+
+~~~ruby
+class MaClasseManaged
+  
+  def age
+    @age ||= data[:age]
+  end
+  
+  def f_age
+    "#{age} ans"
+	end
+  
+end
+~~~
+
+On peut cependant définir un nom de méthode propre en définissant la propriété **`:mformate`** dans les [données des propriétés][].
+
+> Note : toutes les valeurs commençant par “`:m` dans la définition des propriétés concernent des méthodes.
+
+Par exemple :
+
+~~~ruby
+class MaClasse
+  DATA_PROPERTIES = [
+    {prop: :name, 	name:"Patronyme", type: :string, specs:ALL_SPECS, mformate: :formate_nom}
+    {prop: :sexe, 	name:'Sexe', type: :string, specs:ALL_SPECS}
+  ]
+  
+  def name; @name ||= data[:name] end
+  def sexe; @sexe ||= data[:sexe] end
+  def formate_nom
+    "#{sexe == 'F' ? "Madame" : "Monsieur"} #{name}"
+  end
+end #/class
+~~~
+
+
+
+
+
+
+
+
+
+
+
+[données des propriétés]: #data-properties

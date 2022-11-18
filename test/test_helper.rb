@@ -15,4 +15,18 @@ Minitest::Reporters.use! [Minitest::Reporters::DefaultReporter.new(reporter_opti
 # (par exemple test des propriétés)
 class MaClasseLambda
   DATA_PROPERTIES = []
+
+  attr_reader :data
+  def initialize(data = nil)
+    @data = data || {}
+  end
+end
+
+
+def epure(lines)
+  # puts "lines au départ : #{lines.inspect}"
+  lines
+    .join("\n")
+    .gsub(/\e\[0;[0-9][0-9]m/, '')
+    .gsub(/\e\[0m/,'')
 end

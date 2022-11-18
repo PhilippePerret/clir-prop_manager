@@ -5,6 +5,8 @@ require 'clir/prop_manager/constants'
 require 'clir/prop_manager/errors_and_messages'
 require 'clir/prop_manager/Manager'
 require 'clir/prop_manager/Property'
+require 'clir/prop_manager/Displayer'
+require 'clir/prop_manager/Editor'
 
 module Clir
   module PropManager
