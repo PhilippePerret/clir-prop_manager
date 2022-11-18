@@ -25,17 +25,17 @@ class Manager
   # and :remove/:destroy)
   def prepare_instance_methods_of_class
     my = self
-    classe.define_method 'create' do |options = nil|
+    classe.define_method 'create' do |options = {}|
       my.create(self, options)
     end
-    classe.define_method 'edit' do |options = nil|
+    classe.define_method 'edit' do |options = {}|
       my.edit(self, options)
     end
-    classe.define_method 'display' do |options = nil|
+    classe.define_method 'display' do |options = {}|
       my.display(self, options)
     end
     classe.alias_method(:show, :display)
-    classe.define_method 'remove' do |options = nil|
+    classe.define_method 'remove' do |options = {}|
       my.remove(self, options)
     end
     classe.alias_method(:destroy, :remove)
@@ -48,12 +48,12 @@ class Manager
 
   def edit(instance, options = nil)
     @editor ||= Editor.new(self)
-    @editor.edit(instance)
+    @editor.edit(instance, options)
   end
 
   def display(instance, options = nil)
     @displayer ||= Displayer.new(self)
-    @displayer.show(instance)
+    @displayer.show(instance, options)
   end
 
   def remove(instance, options = nil)

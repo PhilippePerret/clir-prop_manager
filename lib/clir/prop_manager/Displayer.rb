@@ -14,25 +14,14 @@ class Displayer
     @manager = manager    
   end
 
-  def show(instance, options = nil)
+  def show(instance, options)
     liste = []
     manager.each_property do |property|
       next if not(property.displayable?)
       # puts "Je dois afficher la propriété @#{property.prop} de specs #{property.specs}"
-      liste << [property.name, formated_value_of(instance, property)]
+      liste << [property.name, property.formated_value_in(instance)]
     end
     puts labelize(liste)
-  end
-
-  def formated_value_of(instance, property)
-    formate_method = "f_#{property.prop}".to_sym
-    if property.format_method
-      instance.send(property.format_method)
-    elsif instance.respond_to?(formate_method)
-      instance.send(formate_method)
-    else
-      instance.send(property.prop)
-    end
   end
 
 end #/class Displayer

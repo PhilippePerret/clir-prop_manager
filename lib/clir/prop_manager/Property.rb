@@ -13,6 +13,20 @@ class Property
     @data     = data
   end
 
+  # --- Helpers Methods ---
+
+  def formated_value_in(instance)
+    return '---' if instance.send(prop).nil?
+    formate_method = "f_#{prop}".to_sym
+    if format_method
+      instance.send(format_method)
+    elsif instance.respond_to?(formate_method)
+      instance.send(formate_method)
+    else
+      instance.send(prop)
+    end
+  end
+
   # --- Predicate Methods ---
 
   def required?
@@ -36,6 +50,7 @@ class Property
   def name;   @name   ||= data[:name]   end
   def specs;  @specs  ||= data[:specs]  end
   def prop;   @prop   ||= data[:prop]   end
+  def type;   @type   ||= data[:type]   end
   def format_method; @format_method ||= data[:mformate] end
 
 end #/class Property
