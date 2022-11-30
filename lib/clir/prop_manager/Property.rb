@@ -13,6 +13,31 @@ class Property
     @data     = data
   end
 
+  # --- Edition Methods ---
+
+  ##
+  # Méthode principale de l'édition de la propriété pour l'instance
+  # +instance+ avec les options éventuelles +options+
+  def edit(instance, options = nil)
+    # 
+    # La valeur par défaut
+    # Soit la valeur actuelle de l'instance, soit la valeur définie
+    # par :default dans les propriétés, qui peut être soit une procé-
+    # dure soit une méthode de classe ou d'instance.
+    # 
+    defvalue = instance.send(prop) || default(instance)
+    # 
+    # On utilise une édition différente en fonction du type de la
+    # donnée
+    # 
+    case type
+    when :string
+
+    else
+      puts "Je ne sais pas encore éditer une donnée de type #{type.inspect}.".orange
+    end
+  end
+
   # --- Helpers Methods ---
 
   def formated_value_in(instance)
@@ -47,10 +72,24 @@ class Property
 
   # --- Hard Coded Properties ---
 
-  def name;   @name   ||= data[:name]   end
-  def specs;  @specs  ||= data[:specs]  end
-  def prop;   @prop   ||= data[:prop]   end
-  def type;   @type   ||= data[:type]   end
+  def name;     @name     ||= data[:name]     end
+  def specs;    @specs    ||= data[:specs]    end
+  def prop;     @prop     ||= data[:prop]     end
+  def type;     @type     ||= data[:type]     end
+  def default(instance)
+    d = data[:default]
+    d = d.call(instance) if d.is_a?(Proc)
+    if d.is_a?(Symbol)
+      if instance.respond_to?(d)
+        instance.send(d)
+      elsif instance.class.respond_to?(d)
+        d = instance.class.send(d)
+      else
+        # La garder telle quelle
+      end
+    end
+    d
+  end
   def format_method; @format_method ||= data[:mformate] end
 
 end #/class Property

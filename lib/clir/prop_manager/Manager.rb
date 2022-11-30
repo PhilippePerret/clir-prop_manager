@@ -39,11 +39,32 @@ class Manager
       my.remove(self, options)
     end
     classe.alias_method(:destroy, :remove)
+    classe.define_method 'data' do
+      return @data
+    end
+    classe.define_method 'data=' do |value|
+      @data = value
+    end
+
+    # Chaque propriété de DATA_PROPERTIES doit faire une méthode qui
+    # permettra de récupérer et de définir la valeur
+    data_properties.each do |dproperty|
+      prop = dproperty[:prop]
+      classe.define_method "#{prop}" do
+        return @data[prop]
+      end
+      classe.define_method "#{prop}=" do |value|
+        @data.merge!( prop => value)
+      end
+    end
   end
+
 
   # To create a instance
   def create(instance, options = nil)
     puts "Je dois apprendre à créer l'instance #{instance.inspect}".jaune
+    edit(instance, options)
+    save(instance, options)
   end
 
   def edit(instance, options = nil)
@@ -58,6 +79,10 @@ class Manager
 
   def remove(instance, options = nil)
     puts "Je dois apprendre à détruire l'instance #{instance.inspect}.".jaune
+  end
+
+  def save(instance, options = nil)
+    puts "Je dois apprendre à sauver l'instance #{instance.inspect}".jaune
   end
 
   # Loop on every property (as instances)

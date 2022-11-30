@@ -24,14 +24,14 @@ class Editor
   end
 
   def edit(instance, options)
-    puts "Je dois apprendre à éditer l'instance #{instance.inspect} avec les options #{options.inspect}.".jaune    
+    # puts "Je dois apprendre à éditer l'instance #{instance.inspect} avec les options #{options.inspect}.".jaune    
     choices = set_choices_with(instance)
     case prop = Q.select((options[:question]||"Définir").jaune, choices, per_page:choices.count )
     when NilClass then return
     when :save
-      puts "Je dois apprendre à sauver l'instance"
+      save
     else
-      puts "Je dois apprendre à éditer #{prop.inspect}"
+      prop.edit(instance, options)
     end
   end
 
