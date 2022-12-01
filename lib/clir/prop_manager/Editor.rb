@@ -24,15 +24,38 @@ class Editor
   end
 
   def edit(instance, options)
-    # puts "Je dois apprendre à éditer l'instance #{instance.inspect} avec les options #{options.inspect}.".jaune    
-    choices = set_choices_with(instance)
-    case prop = Q.select((options[:question]||"Définir").jaune, choices, per_page:choices.count )
-    when NilClass then return
-    when :save
-      save
-    else
-      prop.edit(instance, options)
+    data_modified = false
+    data_saved    = false
+    while true
+      choices = set_choices_with(instance)
+      clear unless debug?
+      case prop = Q.select((options[:question]||"Définir").jaune, choices, per_page:choices.count )
+      when NilClass 
+        break
+      when :save
+        if data_modified && confirmed?(instance)
+          instance.save 
+          data_saved = true
+          break
+        end
+      else
+        modified = prop.edit(instance, options)
+        data_modified = true if modified
+      end
     end
+    if data_modified && not(data_saved)
+      unless Q.yes?("Les données n'ont pas été sauvegardées. Voulez-vous vraiment renoncer et les perdre ?".orange)
+        instance.save # on sauve les données, finalement
+      end
+    end
+  end
+
+  # Confirmation (ou non) des données de l'instance
+  def confirmed?(instance)
+    clear unless debug?
+    instance.show
+    puts "\n\n"
+    return Q.yes?("Confirmez-vous ces données ?".jaune)
   end
 
   # Tty-prompt choices panel

@@ -1,6 +1,8 @@
 # Clir::PropManager
 
-
+1. You define (deeply) the instance properties,
+2. you "attach" the PropManager to your class,
+3. you can then create, edit, remove and save your instances in command line.
 
 ## Installation
 
@@ -33,7 +35,7 @@ Pour qu'une classe quelconque puisse utiliser le gem, lui mettre :
 ~~~ruby
 module MonModule
   class MaClasse
-    include ClirPropManagerConstants # <====
+    include ClirPropManagerConstants # <==== usefull
   end
 end
 
@@ -152,6 +154,47 @@ i.maprop
 # => "Nouvelle valeur"
 
 ~~~
+
+### Définition des propriétés
+
+C'est donc la grosse partie pour utiliser profitablement de `PropManager`. Une bonne définition des propriétés conduit à une utilisation tout à fait efficace.
+
+#### Identifiant de la propriété 
+
+Cet identifiant se définit à l'aide de l'attribut `:prop`.
+
+~~~ruby
+DATA_PROPERTIES = [
+  { prop: :maprop }
+]
+~~~
+
+C'est par ce nom que l'instance connaitra la valeur consignée. Pour définir quelqu'un, par exemple, on aura :
+
+~~~ruby
+DATA_PROPERTIES = [
+  { prop: :prenom },
+  { prop: :nom    },
+]
+~~~
+
+Et une instance pourra utiliser :
+
+~~~ruby
+simone = MaClasse.new
+simone.prenom
+# => "Simone"
+simone.nom
+# => "De Beauvoir"
+~~~
+
+#### Question personnalisée
+
+Par défaut, la question « Nouvelle valeur pour “`<propriété>`” » est posée pour modifier une propriété.
+
+On peut néanmoins définir une autre question avec l'attribut `:quest` qui peut contenir des valeurs de template <b>qui ne doivent utiliser que les valeurs dans les `data` de l'instance</b>.
+
+TODO: Plus tard on pourra aussi imaginer évaluer la question ou fournir d'autres valeurs au template (par exemple un attribut `:quest_values` qui pourrait être définie en dur ou par une procédure qui utiliserait l'instance en premier argument).
 
 #### Valeur par défaut dans les propriétés
 

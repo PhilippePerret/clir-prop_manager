@@ -62,9 +62,7 @@ class Manager
 
   # To create a instance
   def create(instance, options = nil)
-    puts "Je dois apprendre à créer l'instance #{instance.inspect}".jaune
     edit(instance, options)
-    save(instance, options)
   end
 
   def edit(instance, options = nil)
@@ -102,6 +100,12 @@ class Manager
       end
     end
   end
+
+  # @prop Pour valider les nouvelles données
+  def validator
+    @validator ||= Validator.new(self)
+  end
+
 end #/class Manager
 end #/module PropManager
 end #/module Clir

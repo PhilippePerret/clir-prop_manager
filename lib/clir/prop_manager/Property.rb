@@ -18,6 +18,10 @@ class Property
   ##
   # Méthode principale de l'édition de la propriété pour l'instance
   # +instance+ avec les options éventuelles +options+
+  # 
+  # @return TRUE si la donnée a été modifiée, FALSE dans le cas
+  # contraire.
+  # 
   def edit(instance, options = nil)
     # 
     # La valeur par défaut
@@ -30,12 +34,47 @@ class Property
     # On utilise une édition différente en fonction du type de la
     # donnée
     # 
-    case type
-    when :string
+    error = nil
+    while true
+      puts error.rouge if error
+      new_value =
+        case type
+        when :string
+          # FIXED: Noter que pour le moment, on ne peut pas mettre
+          # à nil (vide) on une valeur est déjà définie.
+          Q.ask(question(instance).jaune, {default: defvalue})&.strip
+        else
+          puts "Je ne sais pas encore éditer une donnée de type #{type.inspect}.".orange
+        end
+      #
+      # On vérifie la validité de la donnée, si une méthode de 
+      # validation a été définie. Si la donnée est valide, on la 
+      # consigne, sinon non demande à la modifier.
+      # 
+      error = valid?(new_value, instance)
+      break if error.nil?
 
-    else
-      puts "Je ne sais pas encore éditer une donnée de type #{type.inspect}.".orange
-    end
+    end #/while invalid
+    # 
+    # La donnée a-t-elle changée ?
+    # 
+    modified = new_value != current_value(instance)
+    #
+    # S'il y a eu modification, on affecte la nouvelle valeur
+    # 
+    instance.send("#{prop}=".to_sym, new_value) if modified
+    # 
+    # On indique si la donnée a été modifiée
+    # 
+    return modified
+  end
+
+  # --- Méthodes de check ---
+
+  # @return Nil si OK ou le message d'erreur à afficher
+  def valid?(new_value, instance)
+    return if new_value && (new_value == current_value(instance))
+    return manager.validator.valid?(self, new_value, instance)
   end
 
   # --- Helpers Methods ---
@@ -49,6 +88,24 @@ class Property
       instance.send(formate_method)
     else
       instance.send(prop)
+    end
+  end
+
+
+  # @prop La valeur actuelle de cette propriété
+  # 
+  def current_value(instance)
+    instance.send(prop)
+  end
+
+  # @prop La question à poser pour cette propriété
+  # 
+  # 
+  def question(instance)
+    if quest
+      quest % instance.data
+    else
+      "Nouvelle valeur pour #{name.inspect} : "
     end
   end
 
@@ -76,6 +133,7 @@ class Property
   def specs;    @specs    ||= data[:specs]    end
   def prop;     @prop     ||= data[:prop]     end
   def type;     @type     ||= data[:type]     end
+  def quest;    @quest    ||= data[:quest]    end
   def default(instance)
     d = data[:default]
     d = d.call(instance) if d.is_a?(Proc)

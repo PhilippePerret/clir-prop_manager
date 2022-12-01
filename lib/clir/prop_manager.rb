@@ -7,6 +7,7 @@ require 'clir/prop_manager/Manager'
 require 'clir/prop_manager/Property'
 require 'clir/prop_manager/Displayer'
 require 'clir/prop_manager/Editor'
+require 'clir/prop_manager/Validator'
 
 module Clir
   module PropManager
