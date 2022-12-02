@@ -1,7 +1,7 @@
-# Clir::PropManager
+# Clir::DataManager
 
 1. You define (deeply) the instance properties,
-2. you "attach" the PropManager to your class,
+2. you "attach" the DataManager to your class,
 3. you can then create, edit, remove and save your instances in command line.
 
 ## Installation
@@ -9,14 +9,14 @@
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'clir/prop_manager'
+gem 'clir/data_manager'
 ```
 
 En attendant que le gem soit complet, mettre le code suivant dans le programme devant l'utiliser (pas besoin de faire `bundle install` etc.) :
 
 ~~~
 
-$LOAD_PATH.unshift File.join(Dir.home,'Programmes','Gems','clir-prop_manager','lib')
+$LOAD_PATH.unshift File.join(Dir.home,'Programmes','Gems','clir-data_manager','lib')
 
 ~~~
 
@@ -26,7 +26,7 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install clir-prop_manager
+    $ gem install clir-data_manager
 
 ## Usage
 
@@ -35,15 +35,32 @@ Pour qu'une classe quelconque puisse utiliser le gem, lui mettre :
 ~~~ruby
 module MonModule
   class MaClasse
-    include ClirPropManagerConstants # <==== usefull
+    include ClirDataManagerConstants # <==== usefull
+
+    DATA_PROPERTIES = [...]             # <== see below
+    @@save_system   = :card             # <== see below
+    @@save_format   = :yaml             # <== see below
+    @@save_location = '/path/to/folder' # <== see below
   end
 end
 
-Clir::PropManager.new(MonModule::MaClasse)
+Clir::DataManager.new(MonModule::MaClasse)
 
 ~~~
 
-Le module `ClirPropManagerConstants` permet de charger les constants comme `REQUIRED`, `EDITABLE`, etc.
+### Définition du système de sauvegarde
+
+Il y a 6 façons de sauvegarder les données avec `Clir::DataManager` :
+
+* dans un unique fichier, au format CSV ou YAML,
+* dans des fiches individuelles, au format CSV ou YAML,
+* par un fichier de configuration, au format CSV ou YAML [Ce système n'est pas encore implémenté, il fonctionnera sur la base d'un fichier de configuration qui définira la façon de sauvegarder les données, toujours en CSV ou YAML]
+
+
+
+### Définition des propriétés de l'instance
+
+Le module `ClirDataManagerConstants` permet de charger les constants comme `REQUIRED`, `EDITABLE`, etc.
 
 Il faut ensuite définir les propriétés des instances de cette classe, à l'aide la constante `DATA_PROPERTIES` :
 
@@ -70,7 +87,7 @@ pdata = [
   {prop: :id, ...}
 ]
 
-Clir::PropManager.new(MonModule::MaClasse, pdata)
+Clir::DataManager.new(MonModule::MaClasse, pdata)
 
 ~~~
 
@@ -157,7 +174,7 @@ i.maprop
 
 ### Définition des propriétés
 
-C'est donc la grosse partie pour utiliser profitablement de `PropManager`. Une bonne définition des propriétés conduit à une utilisation tout à fait efficace.
+C'est donc la grosse partie pour utiliser profitablement de `DataManager`. Une bonne définition des propriétés conduit à une utilisation tout à fait efficace.
 
 #### Identifiant de la propriété 
 
@@ -258,5 +275,5 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/clir-prop_manager.
+Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/clir-data_manager.
 

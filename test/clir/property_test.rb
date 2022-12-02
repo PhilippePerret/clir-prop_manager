@@ -1,20 +1,20 @@
 require "test_helper"
 
-class Clir::PropManagerPropertyTest < Minitest::Test
+class Clir::DataManagerPropertyTest < Minitest::Test
 
   def manager
-    @manager ||= Clir::PropManager.new(MaClasseLambda)
+    @manager ||= Clir::DataManager.new(MaClasseLambda)
   end
   def init_property_with(data)
     man = data.delete(:manager) || manager
-    Clir::PropManager::Property.new(man, data)
+    Clir::DataManager::Property.new(man, data)
   end
 
   def test_constants_are_defined
-    assert_equal 1, Clir::PropManager::REQUIRED
-    assert_equal 2, Clir::PropManager::DISPLAYABLE
-    assert_equal 4, Clir::PropManager::EDITABLE
-    assert_equal 8, Clir::PropManager::REMOVABLE
+    assert_equal 1, Clir::DataManager::REQUIRED
+    assert_equal 2, Clir::DataManager::DISPLAYABLE
+    assert_equal 4, Clir::DataManager::EDITABLE
+    assert_equal 8, Clir::DataManager::REMOVABLE
   end
 
   def test_property_responds_to_predicate_methods

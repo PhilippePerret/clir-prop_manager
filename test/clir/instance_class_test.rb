@@ -3,7 +3,7 @@ require "test_helper"
 require_relative 'requirements/ma_classe_ins'
 
 
-class Clir::PropManagerTest < Minitest::Test
+class Clir::DataManagerTest < Minitest::Test
 
 
   def test_instance_displayed

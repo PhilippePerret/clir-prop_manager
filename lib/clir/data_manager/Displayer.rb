@@ -1,10 +1,10 @@
 =begin
-  Clir::PropManager::Manager::Displayer
+  Clir::DataManager::Manager::Displayer
   -------------------------------------
   To display a instance values
 =end
 module Clir
-module PropManager
+module DataManager
 class Manager
 class Displayer
 
@@ -26,5 +26,5 @@ class Displayer
 
 end #/class Displayer
 end #/class Manager
-end #/module PropManager
+end #/module DataManager
 end #/module Clir

@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    clir-prop_manager (0.1.0)
+    clir-data_manager (0.1.0)
       clir
 
 GEM
@@ -33,7 +33,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  clir-prop_manager!
+  clir-data_manager!
   minitest (~> 5.0)
   minitest-color
   rake (~> 12.0)

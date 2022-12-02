@@ -1,5 +1,5 @@
 =begin
-  Clir::PropManager::Manager::Editor
+  Clir::DataManager::Manager::Editor
   -------------------------------------
   To edit a instance values
 
@@ -13,7 +13,7 @@
 
 =end
 module Clir
-module PropManager
+module DataManager
 class Manager
 class Editor
 
@@ -91,7 +91,8 @@ class Editor
     cs = manager.properties.map do |property|
       next if not(property.editable?)
       pvalue = property.formated_value_in(instance)
-      [property.name, pvalue]
+      pname  = property.name
+      [pname, pvalue]
     end.compact
 
     cs = labelize(cs).split("\n")
@@ -107,7 +108,11 @@ class Editor
         requirement_missing = true
       end
       choix = cs.shift
-      {name: choix.send(isdef ? :vert : :blanc), value: property}
+      if property.required?
+        choix = choix.send(isdef ? :bleu : :rouge)
+      end
+      {name: choix, value: property}
+      # {name: choix.send(isdef ? :vert : :blanc), value: property}
     end.compact
 
     # 
@@ -127,5 +132,5 @@ class Editor
 
 end #/class Editor
 end #/class Manager
-end #/module PropManager
+end #/module DataManager
 end #/module Clir

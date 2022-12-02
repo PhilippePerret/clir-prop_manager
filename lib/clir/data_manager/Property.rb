@@ -1,16 +1,16 @@
 module Clir
-module PropManager
+module DataManager
 class Property
-  include ClirPropManagerConstants
+  include ClirDataManagerConstants
 
   attr_reader :manager
   attr_reader :data
 
-  # @param manager {Clir::PropManager::Manager} The manager
+  # @param manager {Clir::DataManager::Manager} The manager
   # @param data {Hash} Property data table
   def initialize(manager, data = nil)
     @manager  = manager
-    @data     = data
+    @data     = data || {}
   end
 
   # --- Edition Methods ---
@@ -57,10 +57,8 @@ class Property
       # validation a été définie. Si la donnée est valide, on la 
       # consigne, sinon non demande à la modifier.
       # 
-      unless new_value.nil?
-        error = valid?(new_value, instance)
-        break if error.nil?
-      end
+      error = valid?(new_value, instance)
+      break if error.nil?
 
     end #/while invalid
     # 
@@ -179,5 +177,5 @@ class Property
     {name: MSG[:cancel] , value: nil    }
   ]
 end #/class Property
-end #/module PropManager
+end #/module DataManager
 end #/module Clir

@@ -1,11 +1,11 @@
 =begin
-  Clir::PropManager::Manager::Validator
+  Clir::DataManager::Manager::Validator
   -------------------------------------
   To invalidate instance values
 
 =end
 module Clir
-module PropManager
+module DataManager
 class Manager
 class Validator
 
@@ -47,5 +47,5 @@ class Validator
 
 end #/class Validator
 end #/class Manager
-end #/module PropManager
+end #/module DataManager
 end #/module Clir

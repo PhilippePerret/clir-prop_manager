@@ -1,6 +1,6 @@
 # Pour pouvoir exposer publiquement, au niveau d'une classe,
 # les constantes utiles
-module ClirPropManagerConstants
+module ClirDataManagerConstants
   
   # --- Properties Constants ---
   REQUIRED    = 1

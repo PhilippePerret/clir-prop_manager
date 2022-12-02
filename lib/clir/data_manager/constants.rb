@@ -1,10 +1,10 @@
 module Clir
-module PropManager
-  include ClirPropManagerConstants
+module DataManager
+  include ClirDataManagerConstants
 
   LANG = 'fr'
 
   CHOIX_RENONCER = {name:"Renoncer", value:nil}
   
-end #/module PropManager
+end #/module DataManager
 end #/module Clir

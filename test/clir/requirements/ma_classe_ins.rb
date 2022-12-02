@@ -1,7 +1,7 @@
 class MaClasseIns
-  include ClirPropManagerConstants
+  include ClirDataManagerConstants
   def self.pmanager
-    @@pmanager ||= Clir::PropManager.new(self)
+    @@pmanager ||= Clir::DataManager.new(self)
   end
   DATA_PROPERTIES = [
     {prop: :id      , id:   'ID'    , type: :number   , specs:REQUIRED  },

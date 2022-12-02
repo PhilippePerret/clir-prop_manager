@@ -1,4 +1,4 @@
-# Manuel français de `Clir::PropManager`
+# Manuel français de `Clir::DataManager`
 
 ## Présentation
 
@@ -11,10 +11,10 @@ Par exemple :
 On définit les données de la classe `MaClasse` :
 
 ~~~ruby
-require 'clir/prop_manager'
+require 'clir/data_manager'
 
 class MaClasse
-  include ClirPropManagerConstants
+  include ClirDataManagerConstants
   DATA_PROPERTIES = [
     {prop: :id, type: :integer, specs:REQUIRED|DISPLAYABLE}, valid_if: {uniq: true},
     {
@@ -36,13 +36,13 @@ On instancie un manager de données pour la classe :
 ~~~ruby
 
 class MaClasse
-  def self.prop_manager
-    @@prop_manager ||= Clir::PropManager.new(self)
+  def self.data_manager
+    @@data_manager ||= Clir::DataManager.new(self)
   end
 end
 ~~~
 
-Note : si la classe définissait ses données dans une autre constante que `DATA_PROPERTIES`, il faudrait donner cette constante en second argument de `Clir::PropManager.new`.
+Note : si la classe définissait ses données dans une autre constante que `DATA_PROPERTIES`, il faudrait donner cette constante en second argument de `Clir::DataManager.new`.
 
 ---
 
@@ -84,7 +84,7 @@ Par défaut, le gem s'attend à trouver la constante `DATA_PROPERTIES` définie 
 class MaClasse
   AUTRES_DATA = [...]
   def self.manager
-    @@manager ||= Clir::PropManager.new(self, AUTRES_DATA)
+    @@manager ||= Clir::DataManager.new(self, AUTRES_DATA)
   end
 ~~~
 
