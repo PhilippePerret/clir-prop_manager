@@ -187,6 +187,15 @@ MaClasseManaged.save_location
 # => /path/to/folder/de/sauvegarde/
 ~~~
 
+### Choisir un item
+
+Parmi les méthodes les plus pratiques du manage de données, il y a la méthode `choose` (implémentée dans la classe) qui permet de choisir un élément parmi tous ceux existant, avec ou non un filtre :
+
+~~~ruby
+MaClasseManaged.choose(options = nil)
+# => retourne l'instance choisie
+~~~
+
 
 
 ## Les petits plus

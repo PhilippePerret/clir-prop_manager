@@ -133,11 +133,14 @@ class Manager
 
   def prepare_class_methods
     my = self
-    class.define_singleton_method 'data_manager' do
+    classe.define_singleton_method 'data_manager' do
       return my
     end
     classe.define_singleton_method 'save_location' do
       return my.save_location
+    end
+    class.define_singleton_method 'choose' do |options = nil|
+      return my.choose(options)
     end
   end
 
