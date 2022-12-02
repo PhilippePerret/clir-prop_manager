@@ -26,14 +26,28 @@ class Editor
   def edit(instance, options)
     data_modified = false
     data_saved    = false
+    error         = nil
     while true
+      # 
+      # Pour choisir la propriété à définir
+      # 
       choices = set_choices_with(instance)
       clear unless debug?
-      case prop = Q.select((options[:question]||"Définir").jaune, choices, per_page:choices.count )
+      # 
+      # Si une erreur a été rencontrée
+      # 
+      puts error.rouge unless error.nil?
+      # 
+      # L'user peut choisir la propriété à définir ou le choix
+      # "Enregistrer" pour enregistrer l'instance
+      # 
+      case prop = Q.select((options[:question]||MSG[:define]).jaune, choices, per_page:choices.count )
       when NilClass 
         break
       when :save
-        if data_modified && confirmed?(instance)
+        if not(all_required?(instance))
+          error = MSG[:all_required_data_must_be_defined]
+        elsif data_modified && confirmed?(instance)
           instance.save 
           data_saved = true
           break
@@ -43,8 +57,9 @@ class Editor
         data_modified = true if modified
       end
     end
+    # / while
     if data_modified && not(data_saved)
-      unless Q.yes?("Les données n'ont pas été sauvegardées. Voulez-vous vraiment renoncer et les perdre ?".orange)
+      unless Q.yes?(MSG[:data_not_saved_cancel].orange)
         instance.save # on sauve les données, finalement
       end
     end
@@ -55,7 +70,18 @@ class Editor
     clear unless debug?
     instance.show
     puts "\n\n"
-    return Q.yes?("Confirmez-vous ces données ?".jaune)
+    return Q.yes?(MSG[:q_confirm_data].jaune)
+  end
+
+  # @return TRUE si toutes les propriétés requises sont définies
+  # pour l'instance donnée
+  def all_required?(instance)
+    manager.properties.each do |property|
+      if property.required? && instance.send(property.prop).nil?
+        return false
+      end
+    end
+    return true
   end
 
   # Tty-prompt choices panel
@@ -89,8 +115,8 @@ class Editor
     # un menu pour enregistrer
     # 
     savable = not(requirement_missing)
-    choix_save = {name:"Enregistrer".send(savable ? :bleu : :gris), value: :save}
-    choix_save.merge!(disabled: '(required values)') if not(savable)
+    choix_save = {name: MSG[:save].send(savable ? :bleu : :gris), value: :save}
+    choix_save.merge!(disabled: "(#{MESSAGES[:still_required_values]})") if not(savable)
     cs.unshift(choix_save)
     # 
     # On a toujours la possibilité d'annuler l'édition

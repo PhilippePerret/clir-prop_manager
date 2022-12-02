@@ -39,20 +39,28 @@ class Property
       puts error.rouge if error
       new_value =
         case type
-        when :string
+        when :string, :email
           # FIXED: Noter que pour le moment, on ne peut pas mettre
           # à nil (vide) on une valeur est déjà définie.
           Q.ask(question(instance).jaune, {default: defvalue})&.strip
+        when :select
+          Q.select(question(instance).jaune, values, {default:default_select_value(instance), per_page:values.count})
+        when :bool
+          Q.select(question(instance).jaune, BOOLEAN_VALUES, {default: boolean_default_value(instance), per_page:BOOLEAN_VALUES.count})
         else
           puts "Je ne sais pas encore éditer une donnée de type #{type.inspect}.".orange
+          sleep 3
+          break
         end
       #
       # On vérifie la validité de la donnée, si une méthode de 
       # validation a été définie. Si la donnée est valide, on la 
       # consigne, sinon non demande à la modifier.
       # 
-      error = valid?(new_value, instance)
-      break if error.nil?
+      unless new_value.nil?
+        error = valid?(new_value, instance)
+        break if error.nil?
+      end
 
     end #/while invalid
     # 
@@ -91,6 +99,20 @@ class Property
     end
   end
 
+  # --- Usefull Methods ---
+
+  # @return l'index de la valeur actuelle de l'instance pour la 
+  # propriété courante, lorsque c'est un select (tty-prompt, en
+  # valeur par défaut, ne supporte que l'index, ou le :name du menu)
+  # Si la valeur n'est pas définie ou si elle est introuvable, on
+  # retourne nil
+  def default_select_value(instance)
+    cvalue = current_value(instance) || default(instance) || return
+    values.each_with_index do |dchoix, idx|
+      return idx + 1 if dchoix[:value] == cvalue
+    end
+    return nil
+  end
 
   # @prop La valeur actuelle de cette propriété
   # 
@@ -134,6 +156,7 @@ class Property
   def prop;     @prop     ||= data[:prop]     end
   def type;     @type     ||= data[:type]     end
   def quest;    @quest    ||= data[:quest]    end
+  def values;   @values   ||= data[:values]   end
   def default(instance)
     d = data[:default]
     d = d.call(instance) if d.is_a?(Proc)
@@ -150,6 +173,11 @@ class Property
   end
   def format_method; @format_method ||= data[:mformate] end
 
+  BOOLEAN_VALUES = [
+    {name: MSG[:yes]    , value: true   },
+    {name: MSG[:no]     , value: false  },
+    {name: MSG[:cancel] , value: nil    }
+  ]
 end #/class Property
 end #/module PropManager
 end #/module Clir

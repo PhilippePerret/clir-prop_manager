@@ -26,12 +26,23 @@ class Validator
   # répondre à la méthode ::get pour obtenir une autre instance.
   # 
   def valid?(property, new_value, instance)
-    puts "New value: #{new_value.inspect}"
+    if property.type == :email && new_value && not(mail_valid?(new_value))
+      return "Ce mail est invalide."
+    end
+
+    #
+    # Une propriété requise doit exister
+    # 
     if property.required? && (!new_value || new_value.empty? || new_value.nil?)
       return "Cette propriété est absolument requise."
     end
 
     return nil # OK
+  end
+
+  # @return true si le mail +mail+ est valide
+  def mail_valid?(mail)
+    mail.match?(/^(.{6,40})@([a-z\-_\.0-9]+)\.([a-z]{2,6})$/i)
   end
 
 end #/class Validator
