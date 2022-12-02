@@ -174,6 +174,7 @@ class Property
 
   # --- Hard Coded Properties ---
 
+  def index;      @index      ||= data[:index]      end
   def name;       @name       ||= data[:name]       end
   def specs;      @specs      ||= data[:specs]      end
   def prop;       @prop       ||= data[:prop]       end

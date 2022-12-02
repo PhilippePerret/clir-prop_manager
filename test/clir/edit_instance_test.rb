@@ -22,4 +22,24 @@ class Clir::EditInstanceTest < Minitest::Test
     refute_match(/Secret/, res)
   end
 
+
+
+  def test_input_transform
+
+    resume "
+    Ce test s'assure que la propriété :itransform fait son
+    travail dans les différentes situations.
+    "
+
+    synopsis "
+    On fait la vérification avec :
+    - :itransform {Proc} (qui doit recevoir en argument, dans
+      l'ordre, l'instance puis la nouvelle valeur)
+    - :itransform {Symbol} qui répond à la valeur (par exemple
+      :upcase)
+    - :itransfom {Symbol} qui répond à l'instance (i.e. méthode de
+      l'instance)
+    "
+    
+  end
 end

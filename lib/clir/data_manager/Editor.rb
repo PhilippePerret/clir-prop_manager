@@ -29,9 +29,9 @@ class Editor
     error         = nil
     while true
       # 
-      # Pour choisir la propriété à définir
+      # Pour choisir la propriété à définir (et l'index par défaut)
       # 
-      choices = set_choices_with(instance)
+      choices, index_default = set_choices_with(instance)
       clear unless debug?
       # 
       # Si une erreur a été rencontrée
@@ -41,7 +41,7 @@ class Editor
       # L'user peut choisir la propriété à définir ou le choix
       # "Enregistrer" pour enregistrer l'instance
       # 
-      case prop = Q.select((options[:question]||MSG[:define]).jaune, choices, per_page:choices.count )
+      case prop = Q.select((options[:question]||MSG[:define]).jaune, choices, { per_page:choices.count, default: index_default, filter:true} )
       when NilClass 
         break
       when :save
@@ -86,6 +86,10 @@ class Editor
 
   # Tty-prompt choices panel
   # Should be update after each user input
+  # 
+  # @return [choices, index_default]
+  # index_default is the first required property which is undefined
+  # (1-start)
   def set_choices_with(instance)
     requirement_missing = false
     cs = manager.properties.map do |property|
@@ -95,17 +99,27 @@ class Editor
       [pname, pvalue]
     end.compact
 
+    index_default = nil
     cs = labelize(cs).split("\n")
     cs = manager.properties.map do |property|
       next if not(property.editable?)
       isdef = instance.send(property.prop) != nil
+      #
+      # Si c'est une création d'instance, on se placera automati-
+      # quement sur le premier champ (property) qui n'est pas définie
+      # 
+      if index_default.nil? && instance.new? && not(isdef)
+        index_default = property.index + 1
+      end
       # 
       # Si c'est une propriété requise et qu'elle n'est pas définie,
       # on indique qu'il manque des définitions avant d'avoir la
-      # possibilité d'enregistrer
+      # possibilité d'enregistrer. On en profite aussi, si c'est la
+      # première, pour définir l'index par défaut
       # 
-      if not(isdef) && property.required?
+      if property.required? && not(isdef)
         requirement_missing = true
+        index_default = property.index + 1 if index_default.nil?
       end
       choix = cs.shift
       if property.required?
@@ -127,7 +141,15 @@ class Editor
     # On a toujours la possibilité d'annuler l'édition
     # 
     cs << CHOIX_RENONCER
-    return cs
+    #
+    # Si l'index par défaut n'a pas pu être déterminé, on prend le
+    # milieu de la liste de propriétés
+    # 
+    index_default = cs.count / 2 if index_default.nil?
+    # 
+    # On retourne la liste des choix et l'item sélectionné
+    # 
+    return [cs, index_default]
   end
 
 end #/class Editor

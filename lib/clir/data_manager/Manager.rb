@@ -44,7 +44,14 @@ class Manager
       classe::DATA_PROPERTIES
     end
     @classe = classe
+    # 
+    # Méthodes d'instance
+    # 
     prepare_instance_methods_of_class
+    # 
+    # Méthodes de classe
+    # 
+    prepare_class_methods
     # 
     # On doit s'assurer que la class propriétaire du manager est 
     # valide, c'est-à-dire définit et contient tous les éléments 
@@ -64,6 +71,10 @@ class Manager
     classe.class_variable_defined?('@@save_format')   || raise(ERRORS[:require_save_format] % classe.name)    
     [:card,:file,:conf].include?(save_system) || raise(ERRORS[:bad_save_system] % classe.name)
     [:csv, :yaml].include?(save_format) || raise(ERRORS[:bas_save_format] % classe.name)
+    
+    if save_system == :card && save_format == :csv
+      raise(ERRORS[:no_csv_format_with_card])
+    end
     if File.exist?(save_location)
       if save_system == :card
         File.directory?(save_location) || raise(ERRORS[:require_save_location_folder] % classe.name)
@@ -85,6 +96,31 @@ class Manager
     return true
   end
 
+  def add(item)
+    @items ||= []
+    @items << item
+    @table ||= {}
+    @table.merge!(item.id => item)
+  end
+
+  ##
+  # Méthode principale du manager, quand le :save_system est :file,
+  # qui enregistre toutes les données
+  # 
+  def save_all
+    case save_format
+    when :yaml
+      all_data = @items.map(&:data)
+      File.write(save_location, all_data.to_yaml)
+    when :csv
+      CSV.open(save_location, 'wb') do |csv|
+        @items.each do |item|
+          csv << item.data
+        end
+      end
+    end
+  end
+
   def save_system
     classe.class_variable_get("@@save_system")
   end
@@ -93,6 +129,16 @@ class Manager
   end
   def save_format
     classe.class_variable_get("@@save_format")
+  end
+
+  def prepare_class_methods
+    my = self
+    class.define_singleton_method 'data_manager' do
+      return my
+    end
+    classe.define_singleton_method 'save_location' do
+      return my.save_location
+    end
   end
 
   # Add instance methods to managed class (:create, :edit, :display
@@ -119,9 +165,57 @@ class Manager
     classe.define_method 'data=' do |value|
       @data = value
     end
+    # 
+    # Méthode de sauvegarde, en fonction du système de sauvegarde
+    # choisi.
+    # 
+    case save_system
+    when :card
+      case save_format
+      when :yaml
+        classe.define_method "data_file" do
+          @data_file ||= File.join(my.save_location,"#{id}.yaml")
+        end
+        classe.define_method "save" do
+          if new?
+            my.add(self) 
+            @data.delete(:is_new)
+          end
+          File.write(data_file, data.to_yaml)
+        end
+      end
+    when :file
+      classe.define_method "full_loaded?" do
+        @is_full_loaded === true
+      end
+      case save_format
+      when :yaml
+        classe.define_method "save" do
+          load_all unless full_loaded?
+          if new?
+            my.add(self) 
+            @data.delete(:is_new)
+          end
+          my.save_all
+        end
+      when :csv
+        classe.define_method "save" do
+          load_all unless full_loaded?
+          if new?
+            my.add(self)
+            @data.delete(:is_new)
+          end
+          my.save_all
+        end
+      end
+    when :conf
+      raise "Je ne sais pas encore utiliser le système :conf de sauvegarde."
+    end
 
+    #
     # Chaque propriété de DATA_PROPERTIES doit faire une méthode qui
     # permettra de récupérer et de définir la valeur
+    #
     data_properties.each do |dproperty|
       prop = dproperty[:prop]
       classe.define_method "#{prop}" do
@@ -131,13 +225,29 @@ class Manager
         @data.merge!( prop => value)
       end
     end
+
+    # 
+    # Quelques propriétés supplémentaires pour les instances
+    # 
+    classe.define_method "new?" do
+      return @data[:is_new] === true
+    end
+
+  end
+
+  # Le nom simple de la classe propriétaire, sans module
+  def class_name
+    @class_name ||= classe.name.to_s.split('::').last.downcase
   end
 
 
   # To create a instance
   def create(instance, options = nil)
-    instance.data = {id: __new_id}
+    instance.data = {id: __new_id, is_new: true}
     edit(instance, options)
+    if not(instance.new?)
+      puts (MSG[:item_created] % {element:  class_name}).vert
+    end
   end
 
   def edit(instance, options = nil)
@@ -154,10 +264,6 @@ class Manager
     puts "Je dois apprendre à détruire l'instance #{instance.inspect}.".jaune
   end
 
-  def save(instance, options = nil)
-    puts "Je dois apprendre à sauver l'instance #{instance.inspect}".jaune
-  end
-
   # Loop on every property (as instances)
   def each_property(&block)
     if block_given?
@@ -170,7 +276,8 @@ class Manager
   # @prop All data properties as instance of {DataManager::Property}
   def properties
     @properties ||= begin
-      data_properties.map do |dproperty|
+      data_properties.map.with_index do |dproperty, idx|
+        dproperty.merge!(index: idx)
         Property.new(self, dproperty)
       end
     end
@@ -197,6 +304,7 @@ class Manager
       @table.merge!(inst.id => inst)
       @items << inst
     end
+    @is_full_loaded = true
   end
   def load_data_from_uniq_file
     if File.exist?(save_location)

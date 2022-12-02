@@ -80,6 +80,11 @@ inst.display
 
 inst.remove
 # => Détruit l'instance
+
+inst.new?
+# => true si c'est une création d'instance (i.e. une instance qui n'a
+#    pas encore été enregistrée
+
 ~~~
 
 ---
@@ -88,7 +93,7 @@ inst.remove
 
 ## Données des propriétés d’instance
 
-Le bon fonctionnement du ***manager de propriété*** tient principalement à la bonne définition des propriétés. Cette définition permet de tout savoir sur la donnée et de savoir comment la gérer.
+Le bon fonctionnement du ***manager de propriété*** tient principalement à la bonne définition des propriétés, généralement (mais pas exclusivement) dans la constante **`DATA_PROPERTIES`**. Cette définition permet de tout savoir sur les données et de savoir comment les gérer.
 
 ### Liste `Array`
 
@@ -96,7 +101,7 @@ Les données sont définies dans une liste (`{Array}`) afin de préserver l'ordr
 
 ### Nom de la constante
 
-Par défaut, le gem s'attend à trouver la constante `DATA_PROPERTIES` définie par la classe à manager. Mais ces données peuvent être définies dans toute autre constante si elle est fournie en second argument de l'instanciation du manager :
+Par défaut, le gem s'attend à trouver la constante **`DATA_PROPERTIES`** définie par la classe à manager. Mais ces données peuvent être définies dans toute autre constante si elle est fournie en second argument de l'instanciation du manager :
 
 ~~~ruby
 class MaClasse
@@ -162,7 +167,35 @@ Cette attribut peut avoir différents types de valeur :
 * **une procédure** qui reçoit en premier argument l’instance et en second argument la valeur entrée
 * **un symbol**. C’est alors une méthode à laquelle répond soit l’instance, sans la valeur. Par exemple, pour notre exemple, nous pourrions avoir `itransform: :upcase`. L’instance, a priori, ne répondant pas à cette méthode, c’est la valeur qui sera affectée.
 
+---
 
+<a name="data-manager"></a>
+
+## Atteindre le manager de données (`#data_manager`)
+
+Depuis la classe, on peut faire appel au manager de données à l’aide de `data_manager`. Par exemple :
+
+~~~ruby
+MaClasseManaged.data_manager.save_format
+# Retourne :yaml si le format défini (dans @@save_format) est :yaml
+~~~
+
+La seule méthode du data manager qui est exposée publiquement d’office, c’est la propriété **`save_location`**  qui retourne le chemin d’accès soit au fichier de données (si `@@save_system = :file`) soit au dossier des fiches (si `@@save_system = :card`). On peut l’atteindre par :
+
+~~~ruby
+MaClasseManaged.save_location
+# => /path/to/folder/de/sauvegarde/
+~~~
+
+
+
+## Les petits plus
+
+Le fait de travailler avec `Clir::DataManager` offre de nombreux avantages, comme on a pu le voir. Il existe cependant quelques petites astuces à connaitre.
+
+### Filtrer la liste des propriétés
+
+Quand la liste des propriétés de l’instance est affichée, par exemple pour l’éditer (aka la modifier), on peut atteindre très rapidement la propriété à modifier en tapant ses premières lettres (ou ses lettres caractéristiques). Cela filtre la liste des propriétés et n’affiche que les propriétés correspondant au filtre. Si la liste des propriétés est longue, on peut énormément se simplifier la vie avec cette astuce.
 
 
 
