@@ -53,6 +53,12 @@ class Property
           break
         end
       #
+      # Si la propriété définit une méthode de transformation de
+      # l'entrée, on l'utilise
+      if new_value && itransform
+        new_value = transform_new_value(instance, new_value)
+      end
+      #
       # On vérifie la validité de la donnée, si une méthode de 
       # validation a été définie. Si la donnée est valide, on la 
       # consigne, sinon non demande à la modifier.
@@ -97,7 +103,26 @@ class Property
     end
   end
 
-  # --- Usefull Methods ---
+  # --- Functional Methods ---
+
+  ##
+  # Si la propriété définit :itransform (méthode de transformation
+  # de la donnée entrée), cette méthode est appelée pour transformer
+  # la donnée.
+  def transform_new_value(instance, new_value)
+    case itransform
+    when Symbol
+      if instance.respond_to?(itransform)
+        instance.send(itransform, new_value)
+      elsif new_value.respond_to?(itransform)
+        new_value.send(itransform)
+      else
+        raise "La valeur #{new_value.inspect} ne répond pas à #{itransform.inspect}…"
+      end
+    when Proc
+      itransform.call(instance, new_value)
+    end
+  end
 
   # @return l'index de la valeur actuelle de l'instance pour la 
   # propriété courante, lorsque c'est un select (tty-prompt, en
@@ -149,12 +174,13 @@ class Property
 
   # --- Hard Coded Properties ---
 
-  def name;     @name     ||= data[:name]     end
-  def specs;    @specs    ||= data[:specs]    end
-  def prop;     @prop     ||= data[:prop]     end
-  def type;     @type     ||= data[:type]     end
-  def quest;    @quest    ||= data[:quest]    end
-  def values;   @values   ||= data[:values]   end
+  def name;       @name       ||= data[:name]       end
+  def specs;      @specs      ||= data[:specs]      end
+  def prop;       @prop       ||= data[:prop]       end
+  def type;       @type       ||= data[:type]       end
+  def quest;      @quest      ||= data[:quest]      end
+  def values;     @values     ||= data[:values]     end
+  def itransform; @itransform ||= data[:itransform] end
   def default(instance)
     d = data[:default]
     d = d.call(instance) if d.is_a?(Proc)

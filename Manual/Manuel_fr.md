@@ -28,19 +28,37 @@ class MaClasse
       }
     }
   ]
+  
+  # On doit définir aussi la sauvegarde
+  @@save_system 	= :card # données sauvées dans des fiches
+  @@save_format 	= :yaml # au format YAML
+  @@save_location = "./data" # dans le dossier 'data'
 end
 ~~~
 
 On instancie un manager de données pour la classe :
 
 ~~~ruby
-
-class MaClasse
-  def self.data_manager
-    @@data_manager ||= Clir::DataManager.new(self)
-  end
-end
+Clir::DataManager.new(MaClasse)
 ~~~
+
+Cela implémente automatiquement plein de méthodes utiles pour les données et notamment :
+
+~~~ruby
+MaClasse.get(id)
+# Retourne l'instance d'identifiant :id
+
+<MaClasse>#create([{data}])
+# Pour créer une instance (avec ou sans les données {data}
+
+MaClasse.items
+# => liste des instances
+
+MaClasse.table 
+# => table des instances avec en clé leur identifiant
+~~~
+
+
 
 Note : si la classe définissait ses données dans une autre constante que `DATA_PROPERTIES`, il faudrait donner cette constante en second argument de `Clir::DataManager.new`.
 
@@ -133,7 +151,16 @@ end #/class
 
 
 
+### Transformation de la donnée entrée
 
+Quand on attend un nom (patronyme), on peut vouloir systématiquement le passer en capitale, quelle que soit l’entrée de l’utilisateur.
+
+Pour ce faire, dans la donnée de la propriété dans `DATA_PROPERTIES`, on ajoute l’attribut `:itransform` (qui signifie “input transform” ou “transformation de la donnée entrée”.
+
+Cette attribut peut avoir différents types de valeur :
+
+* **une procédure** qui reçoit en premier argument l’instance et en second argument la valeur entrée
+* **un symbol**. C’est alors une méthode à laquelle répond soit l’instance, sans la valeur. Par exemple, pour notre exemple, nous pourrions avoir `itransform: :upcase`. L’instance, a priori, ne répondant pas à cette méthode, c’est la valeur qui sera affectée.
 
 
 
