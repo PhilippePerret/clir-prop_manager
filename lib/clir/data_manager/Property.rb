@@ -39,9 +39,19 @@ class Property
       puts error.rouge if error
       new_value =
         case type
+        when :id
+          # Cas spécial d'une propriété <>_id. Si tout a bien été
+          # défini, DataManager a mis dans l'attribut other_class la
+          # classe de l'élément.
+          if relative_class
+            item = relative_class.choose(create: true)
+            item&.id
+          else
+            raise "Pour la propriété #{prop.inspect}, de type :id, la classe ##{relative_class} devrait être définie."
+          end
         when :string, :email
           # FIXED: Noter que pour le moment, on ne peut pas mettre
-          # à nil (vide) on une valeur est déjà définie.
+          # à nil (vide) quand une valeur est déjà définie.
           Q.ask(question(instance).jaune, {default: defvalue})&.strip
         when :select
           Q.select(question(instance).jaune, values, {default:default_select_value(instance), per_page:values.count})
@@ -174,14 +184,13 @@ class Property
 
   # --- Hard Coded Properties ---
 
-  def index;      @index      ||= data[:index]      end
-  def name;       @name       ||= data[:name]       end
-  def specs;      @specs      ||= data[:specs]      end
-  def prop;       @prop       ||= data[:prop]       end
-  def type;       @type       ||= data[:type]       end
-  def quest;      @quest      ||= data[:quest]      end
-  def values;     @values     ||= data[:values]     end
-  def itransform; @itransform ||= data[:itransform] end
+  def index;    @index    ||= data[:index]    end
+  def name;     @name     ||= data[:name]     end
+  def specs;    @specs    ||= data[:specs]    end
+  def prop;     @prop     ||= data[:prop]     end
+  def type;     @type     ||= data[:type]     end
+  def quest;    @quest    ||= data[:quest]    end
+  def values;   @values   ||= data[:values]   end
   def default(instance)
     d = data[:default]
     d = d.call(instance) if d.is_a?(Proc)
@@ -196,7 +205,9 @@ class Property
     end
     d
   end
-  def format_method; @format_method ||= data[:mformate] end
+  def itransform;       @itransform     ||= data[:itransform]     end
+  def relative_class;   @relative_class ||= data[:relative_class] end
+  def format_method;    @format_method  ||= data[:mformate]       end
 
   BOOLEAN_VALUES = [
     {name: MSG[:yes]    , value: true   },

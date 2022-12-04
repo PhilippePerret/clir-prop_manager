@@ -1,7 +1,7 @@
 =begin
   Clir::DataManager::Manager::Editor
   -------------------------------------
-  To edit a instance values
+  To edit a instance values (i.e. a proprerty)
 
   2 editing system:
 

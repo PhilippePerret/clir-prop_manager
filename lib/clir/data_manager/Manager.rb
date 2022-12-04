@@ -359,21 +359,29 @@ class Manager
       # référence à un user {User})
       # 
       if prop.to_s.end_with?('_id')
-        traite_property_as_other_class_instance(property)
+        traite_property_as_other_class_instance(dproperty)
       end
     end
 
   end
 
-  def traite_property_as_other_class_instance(property)
+  def traite_property_as_other_class_instance(dproperty)
     my = self
-    prop        = property[:prop]
+    prop        = dproperty[:prop]
     class_min   = prop[0..-4]
     other_class = get_classe_from(class_min)
-    property.merge!(other_class: other_class)
+    # puts "other_classe avec #{class_min.inspect} : #{other_class}"
+    # sleep 4
+    dproperty.merge!(relative_class: other_class)
+    # 
+    # Les méthodes utiles pour la gestion de l'autre classe
+    # 
     classe.define_method "#{class_min}" do # p.e. def user; ... end
       instace_variable_get("@#{class_min}") || begin
-        instace_variable_set("@#{class_min}", other_class.get(self.send(prop)))
+        instace_variable_set(
+          "@#{class_min}", 
+          send("#{class_min}_class".to_sym).get(self.send(prop))
+        )
       end
     end
     classe.define_method "#{class_min}=" do |owner| # p.e. user=
