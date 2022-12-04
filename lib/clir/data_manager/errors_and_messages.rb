@@ -31,11 +31,12 @@ module DataManager
 
   MESSAGES__ = {
     'fr' => {
-      cancel:     'Renoncer',
-      define:     'Définir',
-      no:         'Non',
-      save:       'Enregistrer',
-      yes:        'Oui',
+      cancel:         'Renoncer',
+      create_new:     'Créer nouvel item',
+      define:         'Définir',
+      no:             'Non',
+      save:           'Enregistrer',
+      yes:            'Oui',
       still_required_values: "valeurs requises à définir",
       all_required_data_must_be_defined: "Toutes les données requises doivent être définies.",
       q_confirm_data: 'Confirmez-vous ces données ?',
@@ -44,6 +45,7 @@ module DataManager
     },
     'us' => {
       cancel:       'Cancel',
+      create_new:   'Create new item',
       define:       'Define',
       no:           'No',
       save:         'Save',

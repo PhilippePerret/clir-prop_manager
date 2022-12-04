@@ -33,7 +33,7 @@ class Validator
     #
     # Une propriété requise doit exister
     # 
-    if property.required? && (!new_value || new_value.empty? || new_value.nil?)
+    if property.required? && (!new_value || new_value.to_s.empty?)
       return "Cette propriété est absolument requise."
     end
 

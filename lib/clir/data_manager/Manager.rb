@@ -10,7 +10,7 @@ class Manager
 
     ##
     # Méthode qui retourne un nouvel identifiant pour la classe
-    # donnée.
+    # propriétaire.
     # 
     # Suivant le type de données, on trouve le dernier identifiant :
     #   - dans un fichier contenant les informations générales sur
@@ -110,18 +110,43 @@ class Manager
   # l'affichage (sa version "formatée" si elle existe) mais les
   # options fournies peuvent définir une autre propriété avec l'at-
   # tribut :name_property
+  # 
+  # @param options {Hash}
+  #   :question   La question à poser ("Choisir" par défaut)
+  #   :multi      Si true, on peut choisir plusieurs éléments
+  #   :create     Si true, on peut créer un nouvel élément
+  # 
   def choose(options = nil)
+    # 
+    # Définition des options
+    # 
     options ||= {}
     options.key?(:multi) || options.merge!(multi: false)
+    options[:question]   ||= "Choisir"
+    options[:question] = options[:question].jaune
     load_data unless full_loaded?
     @tty_name_procedure = nil
+    # 
+    # Définition des menus
+    # 
     cs = @items.map do |item|
       {name: tty_name_for(item, options), value: item}
     end + [CHOIX_RENONCER]
+    cs.unshift(CHOIX_CREATE) if options[:create]
+    # 
+    # Interaction
+    # 
     if options[:multi]
-      Q.multi_select("Choisir".jaune, cs, {filter:true})
+      choixs = Q.multi_select(options[:question], cs, {filter:true})
+      if choixs.include?(:create)
+        choixs.delete(:create)
+        choixs << classe.new.create
+      end
+      choixs
     else
-      Q.select("Choisir".jaune, cs, {per_page: 20, filter:true})
+      choix = Q.select(options[:question], cs, {per_page: 20, filter:true})
+      choix = classe.new.create if choix == :create
+      choix
     end
   end
 
@@ -259,10 +284,10 @@ class Manager
       @data = data
     end
     classe.define_method 'create' do |options = {}|
-      my.create(self, options)
+      return my.create(self, options)
     end
     classe.define_method 'edit' do |options = {}|
-      my.edit(self, options)
+      return my.edit(self, options)
     end
     classe.define_method 'display' do |options = {}|
       my.display(self, options)
@@ -396,11 +421,13 @@ class Manager
     if not(instance.new?)
       puts (MSG[:item_created] % {element:  class_name}).vert
     end
+    return self # chainage
   end
 
   def edit(instance, options = nil)
     @editor ||= Editor.new(self)
     @editor.edit(instance, options)
+    return self # chainage
   end
 
   def display(instance, options = nil)
