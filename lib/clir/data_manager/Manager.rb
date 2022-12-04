@@ -104,6 +104,58 @@ class Manager
   end
 
   ##
+  # Permet de choisir une instance
+  # 
+  # Par défaut, c'est la deuxième propriété qui est utilisée pour
+  # l'affichage (sa version "formatée" si elle existe) mais les
+  # options fournies peuvent définir une autre propriété avec l'at-
+  # tribut :name_property
+  def choose(options = nil)
+    options ||= {}
+    options.key?(:multi) || options.merge!(multi: false)
+    load_data unless full_loaded?
+    @tty_name_procedure = nil
+    cs = @items.map do |item|
+      {name: tty_name_for(item, options), value: item}
+    end + [CHOIX_RENONCER]
+    if options[:multi]
+      Q.multi_select("Choisir".jaune, cs, {filter:true})
+    else
+      Q.select("Choisir".jaune, cs, {per_page: 20, filter:true})
+    end
+  end
+
+  # @return le string à utiliser pour l'attribut :name de TTY prompt
+  def tty_name_for(item, options)
+    @tty_name_procedure ||= begin
+      if options.key?(:name4tty) && options[:name4tty]
+        #
+        # Procédure à utiliser définie dans les options
+        #
+        case v = options[:name4tty]
+        when Symbol then Proc.new { |inst| inst.send(options[:name4tty]) }
+        when Proc   then Proc.new { |inst| options[:name4tty].call(inst) }
+        end
+      elsif item.respond_to?(:name4tty)
+        # 
+        # :name4tty Définie comme méthode d'intance
+        # 
+        case v = item.send(:name4tty)
+        when Symbol then Proc.new { |inst| inst.send(inst.send(:name4tty)) }
+        when String then Proc.new { |inst| inst.send(:name4tty) }
+        end
+      else
+        #
+        # Aucune définition => deuxième propriété
+        # 
+        prop = data_properties[1][:prop]
+        Proc.new { |inst| inst.send(prop) }
+      end
+    end
+    @tty_name_procedure.call(item)
+  end
+
+  ##
   # Méthode principale du manager, quand le :save_system est :file,
   # qui enregistre toutes les données
   # 
@@ -131,6 +183,58 @@ class Manager
     classe.class_variable_get("@@save_format")
   end
 
+  # 
+  # Pour savoir si toutes les données sont chargées
+  # 
+  def full_loaded?
+    @is_full_loaded === true
+  end
+
+
+  # --- Usefull Method for classes ---
+
+  # Reçoit quelque chose comme 'edic_test_class' et retourne 
+  # Edic::TestClass en mémorisant pour accélérer le processus
+  # 
+  def get_classe_from(class_min)
+    return self.class.get_class_from_class_mmin(class_min)
+  end
+  def self.get_class_from_class_mmin(class_min)
+    @@class4classMin ||= {}
+    @@class4classMin[class_min] ||= begin
+      dclass = class_min.split('_').map{|n|n.titleize}
+      cc = Object # la classe courante en tant que classe
+      ss = nil # le string courant en tan que classe en recherche
+      while dclass.count > 0
+        x = dclass.shift
+        if cc.const_defined?(x)
+          cc = cc.const_get(x) # => class
+        elsif ss.nil?
+          ss = x
+        elsif ss != nil
+          if cc.const_defined?(ss + x)
+            cc = cc.const_get(ss + x)
+            ss = nil
+          else
+            ss = ss + x # => "Data" + "Manager" => "DataManager"
+            # Et on poursuit
+          end
+        end
+      end
+      cc = nil if cc == Object
+      cc
+    end
+  end
+
+  # Le nom simple de la classe propriétaire, sans module
+  def class_name
+    @class_name ||= classe.name.to_s.split('::').last.downcase
+  end
+
+
+
+  # --- Implementation Managed Class Methods ---
+
   def prepare_class_methods
     my = self
     classe.define_singleton_method 'data_manager' do
@@ -139,8 +243,11 @@ class Manager
     classe.define_singleton_method 'save_location' do
       return my.save_location
     end
-    class.define_singleton_method 'choose' do |options = nil|
-      return my.choose(options)
+    if classe.methods.include?(:choose)
+    else    
+      classe.define_singleton_method 'choose' do |options = nil|
+        return my.choose(options)
+      end
     end
   end
 
@@ -148,6 +255,9 @@ class Manager
   # and :remove/:destroy)
   def prepare_instance_methods_of_class
     my = self
+    classe.define_method 'initialize' do |data = {}|
+      @data = data
+    end
     classe.define_method 'create' do |options = {}|
       my.create(self, options)
     end
@@ -168,6 +278,22 @@ class Manager
     classe.define_method 'data=' do |value|
       @data = value
     end
+
+    # 
+    # Quelques propriétés supplémentaires pour les instances
+    # 
+    classe.define_method "new?" do
+      return @data[:is_new] === true
+    end
+
+    prepare_save_methods
+
+    prepare_properties_methdos
+
+  end
+
+  def prepare_save_methods
+    my = self
     # 
     # Méthode de sauvegarde, en fonction du système de sauvegarde
     # choisi.
@@ -188,13 +314,10 @@ class Manager
         end
       end
     when :file
-      classe.define_method "full_loaded?" do
-        @is_full_loaded === true
-      end
       case save_format
       when :yaml
         classe.define_method "save" do
-          load_all unless full_loaded?
+          load_all unless my.full_loaded?
           if new?
             my.add(self) 
             @data.delete(:is_new)
@@ -203,7 +326,7 @@ class Manager
         end
       when :csv
         classe.define_method "save" do
-          load_all unless full_loaded?
+          load_all unless my.full_loaded?
           if new?
             my.add(self)
             @data.delete(:is_new)
@@ -215,6 +338,9 @@ class Manager
       raise "Je ne sais pas encore utiliser le système :conf de sauvegarde."
     end
 
+  end
+
+  def prepare_properties_methdos
     #
     # Chaque propriété de DATA_PROPERTIES doit faire une méthode qui
     # permettra de récupérer et de définir la valeur
@@ -227,22 +353,33 @@ class Manager
       classe.define_method "#{prop}=" do |value|
         @data.merge!( prop => value)
       end
-    end
-
-    # 
-    # Quelques propriétés supplémentaires pour les instances
-    # 
-    classe.define_method "new?" do
-      return @data[:is_new] === true
+      # 
+      # Propriétés spéciales qui se terminent par _id et sont des
+      # liens avec une autre classe (typiquement : user_id pour faire
+      # référence à un user {User})
+      # 
+      if prop.to_s.end_with?('_id')
+        traite_property_as_other_class_instance(property)
+      end
     end
 
   end
 
-  # Le nom simple de la classe propriétaire, sans module
-  def class_name
-    @class_name ||= classe.name.to_s.split('::').last.downcase
+  def traite_property_as_other_class_instance(property)
+    my = self
+    prop        = property[:prop]
+    class_min   = prop[0..-4]
+    other_class = get_classe_from(class_min)
+    property.merge!(other_class: other_class)
+    classe.define_method "#{class_min}" do # p.e. def user; ... end
+      instace_variable_get("@#{class_min}") || begin
+        instace_variable_set("@#{class_min}", other_class.get(self.send(prop)))
+      end
+    end
+    classe.define_method "#{class_min}=" do |owner| # p.e. user=
+      self.send("#{prop}=".to_sym, owner.id)
+    end
   end
-
 
   # To create a instance
   def create(instance, options = nil)

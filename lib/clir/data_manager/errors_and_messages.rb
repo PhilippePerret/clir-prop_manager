@@ -3,6 +3,7 @@ module DataManager
 
   ERRORS__ = {
     'fr' => {
+      undefined_class: 'La classe %s est indéfinie…',
       require_data_properties: 'La classe %s doit définir DATA_PROPERTIES.',
       require_save_system: 'La class %s doit définir @@save_system dans la classe propriétaire du manager pour définir le système d’enregistrement à utiliser (:card, :file ou :conf — cf. manuel)',
       require_save_format: 'La class %s doit définir @@save_format, le format de sauvegarde, entre :yaml et :csv',
@@ -14,6 +15,7 @@ module DataManager
       no_csv_format_with_card: 'L’enregistrement par fiche (:card) ne permet pas le format :csv.',
     },
     'us' => {
+      undefined_class: 'Class %s is undefined…',
       require_data_properties: 'Class %s should define DATA_PROPERTIES.',
       require_save_system: 'Owner class %s should define @@save_system, the save system to use (:card, :file ou :conf — see manual)',
       require_save_format: 'Owner class %s should define @@save_format, among :yaml and :csv',

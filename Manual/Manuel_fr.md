@@ -1,5 +1,11 @@
 # Manuel français de `Clir::DataManager`
 
+
+
+[TOC]
+
+
+
 ## Présentation
 
 Cette classe permet de gérer facilement les données des instances (et des classes) dans les applications en ligne de commande (donc les applications tournant dans le Terminal).
@@ -91,7 +97,7 @@ inst.new?
 
 <a name="data-properties"></a>
 
-## Données des propriétés d’instance
+## Données des propriétés d’instance (`DATA_PROPERTIES`)
 
 Le bon fonctionnement du ***manager de propriété*** tient principalement à la bonne définition des propriétés, généralement (mais pas exclusivement) dans la constante **`DATA_PROPERTIES`**. Cette définition permet de tout savoir sur les données et de savoir comment les gérer.
 
@@ -112,6 +118,141 @@ class MaClasse
 ~~~
 
 ---
+
+<a name="attributs-property"></a>
+
+###  Attributs d’une propriété
+
+Comme nous venons de le voir, chaque ligne (chaque item) de [`DATA_PROPERTIES`](#data-properties) définit une propriété de l’instance, comme on les appelle en ruby. Nous allons voir les arguments que doivent  ou peuvent comporter chaque *property*.
+
+#### `:prop` : Nom de la propriété, requise
+
+`:prop` définit le nom de la propriété, pour savoir si c’est l’identifiant, le nom, la date de début etc. 
+
+La première propriété, dans *Data-Manager*, doit obligatoirement définir la propriété `:id` : 
+
+~~~ruby
+DATA_PROPERTIES = [
+  {prop: :id ... }
+ ]
+~~~
+
+#### Nom de propriété spéciale : `:<class min>_id`
+
+Un nom de propriété spécial — et même magique — est constitué d’un nom minusculisé de classe connue suivi par `_id`. Quand un nom est composé de la sorte, cela signifie que la propriété concernant l’identifiant d’une autre instance dans la classe est minusculisée.
+
+Par exemple :
+
+~~~ruby
+class MaClasseManaged
+	DATA_PROPERTIES = [
+  	# ...
+	  {prop: user_id 	,name:"Propriétaire"	,type: :id ...}
+	]
+end
+~~~
+
+… signifie que chaque instance de cette classe peut être liée à  une instance de la classe `User`.
+
+*DataManager* aussitôt lui-même ce genre de propriété, en :
+
+* utilisant la méthode générale `choose` pour définir cette donnée,
+* implémentant la méthode-propriété `classe_min`qui retournera l’instance en question.
+
+**Minusculisation du nom de la classe**
+
+Si le nom de la classe contient des capitales, il sera décamélisé (`DataManager` => `data_manager` => `data_manager_id`).
+
+Si le nom de la classe est composé, les doubles doubles-points seront remplacés aussi par des tirets plats (`Edic::Produit` => `edic_produit` => `edic_produit_id`
+
+---
+
+### Nom humain utilisé pour l’affichage de l’instance
+
+Il y a 5 façons différents pour définir le nom (`:name` dans `Tty-prompt`) qui sera utilisé pour désigner l’instance :
+
+* **valeur par défaut**. Par défaut, il s’agit de la **deuxième propriété définie** (entendu que la première est l’identifiant),
+
+* **valeur générale**. Dans la classe, si on définit la **méthode d’instance #name4tty**, c’est cette méthode qui sera appelée et devra retourner le nom à afficher. Typiquement, si la classe est `People`, qui définit les propriétés `:nom` et `:prenom`, on pourra avoir une méthode :
+
+  ~~~ruby
+  class MaClasseManaged
+    def name4tty
+      "#{prenom} #{nom}".strip
+    end
+  end
+  ~~~
+
+* **nom de méthode**. `#name4tty` peut également définir la méthode à utiliser, ce sera alors un `Symbol` :
+
+  ~~~ruby
+  class MaClasseManaged
+    def name4tty
+      :patronyme
+    end
+    
+    def patronyme
+      @patronyme ||= "#{prenom} #{nom}".strip
+    end
+  end
+  ~~~
+
+  Noter qu’on peut aussi le faire par alias :
+
+  ~~~ruby
+  class MaClasseManaged
+    alias :name4tty :patronyme
+  end
+  ~~~
+
+* surclassement. Il est possible de redéfinir la méthode (de classe) utilisée pour définir l’attribut `:name4tty` dans les options utilisées. Par exemple avec la méthode de classe `::choose`  :
+
+  ~~~ruby
+  class MaClasseManaged
+    def self.choose
+      data_manager.choose({name4tty: :patronyme})
+    end
+  end
+  ~~~
+
+  De cette manière, chaque fois que `MaClasseManaged.choose` sera invoquée, cette méthode sera utilisée, redéfinissant la propriété à utiliser.
+
+  Il est également possible de définir une procédure plutôt qu’un symbol. Elle sera alors évaluée sur l’instance (noter, ci-dessous, également, comment on peut garder des options qui seraient passées) :
+
+  ~~~ruby
+  class MaClasseManaged
+    def self.choose(options = nil)
+      options ||= {}
+      options.merge!({name4tty: Proc.new { |ins| "#{inst.prenom} #{inst.nom}".strip })
+      data_manager.choose(options)
+    end
+  end
+  ~~~
+
+  
+
+* **attribut d’option**. Enfin, il est possible, ponctuellement de définir la méthode qui doit être utilisée en renseignant les `:options` qui accompagnent souvent un affichage. Par exemple, pour la méthode de classe `::choose`, qui permet de choisir une instance, on peut utiliser :
+
+  ~~~ruby
+  class MaClasseManaged
+    def self.envoyer_carte
+      destinataire = choose({name4tty: :patronyme})
+    end
+  end
+  ~~~
+
+  Ici aussi on peut avoir en valeur soit un `Symbol`, pour une méthode, soit une procédure qui prendra en premier argument l’instance traitée.
+
+Notez que ces méthodes sont présentées par ordre inverse de précédence. C’est-à-dire que c’est la dernière qui sera utilisée prioritairement et la première qui sera utilisée en dernier recours. Donc, dans l’ordre, l’application fera :
+
+1. attribut direct dans les options envoyées (définissant soit une méthode — `Symbol`— soit une procédure — `Proc`),
+2. redéfinition de la méthode générale de classe (par exemple `::choose`),
+3. à égalité : méthode d’instance `#name4tty` (retournant un string, la valeur à afficher, ou bien un symbol, la méthode à utiliser)
+4. la deuxième propriété définie dans les [données des propriétés][].
+
+---
+
+<a name="formatage-affichage"></a>
 
 ## Formatage de l’affichage des données
 
