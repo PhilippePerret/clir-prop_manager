@@ -8,33 +8,33 @@ end #/<< self module
 
 class Manager
 
-    ##
-    # Méthode qui retourne un nouvel identifiant pour la classe
-    # propriétaire.
-    # 
-    # Suivant le type de données, on trouve le dernier identifiant :
-    #   - dans un fichier contenant les informations générales sur
-    #     la classe d'objets
-    #   - en relevant les ID d'un fichier YAML et en prenant le
-    #     dernier.
-    #   - en fouillant dans un dossier de fiches pour trouver la
-    #     dernière.
-    # 
-    def __new_id
-      case save_system
-      when :card
-        id = File.read(last_id_path).strip.to_i + 1
-        File.write(last_id_path, id.to_s)
-        return id
-      when :file
-        @last_id || load_data
-      when :conf
-        puts "Je ne sais pas encore gérer le système de sauvegarde :conf.".orange
-        raise(ExitSilently)
-      end
-      1
+  ##
+  # Méthode qui retourne un nouvel identifiant pour la classe
+  # propriétaire.
+  # 
+  # Suivant le type de données, on trouve le dernier identifiant :
+  #   - dans un fichier contenant les informations générales sur
+  #     la classe d'objets
+  #   - en relevant les ID d'un fichier YAML et en prenant le
+  #     dernier.
+  #   - en fouillant dans un dossier de fiches pour trouver la
+  #     dernière.
+  # 
+  def __new_id
+    case save_system
+    when :card
+      id = File.read(last_id_path).strip.to_i + 1
+      File.write(last_id_path, id.to_s)
+      return id
+    when :file
+      @last_id || load_data
+    when :conf
+      puts "Je ne sais pas encore gérer le système de sauvegarde :conf.".orange
+      raise(ExitSilently)
     end
-  
+    1
+  end
+
   attr_reader :classe
   attr_reader :data_properties
   
@@ -129,10 +129,7 @@ class Manager
     # 
     # Définition des menus
     # 
-    cs = @items.map do |item|
-      {name: tty_name_for(item, options), value: item}
-    end + [CHOIX_RENONCER]
-    cs.unshift(CHOIX_CREATE) if options[:create]
+    cs = get_choices_with_precedences(options)
     # 
     # Interaction
     # 
@@ -142,12 +139,64 @@ class Manager
         choixs.delete(:create)
         choixs << classe.new.create
       end
+      choixs.each { |choix| choose_precedence_set(choix.id) }
       choixs
     else
       choix = Q.select(options[:question], cs, {per_page: 20, filter:true})
       choix = classe.new.create if choix == :create
+      choix || return # cancel
+      choose_precedence_set(choix.id)
       choix
     end
+  end
+
+  def choose_precedence_set(id)
+    precedence_ids.delete(id)
+    precedence_ids.unshift(id)
+    puts "Nouvelle liste = #{precedence_ids.join(' ')}".bleu
+    sleep 2
+    File.write(precedence_list, precedence_ids.join(' '))
+  end
+
+  def precedence_ids
+    @precedence_ids ||= begin
+      if File.exist?(precedence_list)
+        File.read(precedence_list).split(' ').map(&:to_i)
+      else [] end
+    end
+  end
+
+  def precedence_list
+    @precedence_list ||= File.join(tmp_folder, "#{classe.name}.precedences")
+  end
+
+  def tmp_folder
+    @tmp_folder ||= mkdir(File.join(APP_FOLDER,'tmp','precedences'))
+  end
+
+  ##
+  # Retourne une liste avec les items classés par précédences si la
+  # liste de précédence existe.
+  # 
+  def get_choices_with_precedences(options)
+    list = nil
+    if File.exist?(precedence_list)
+      all_ids = @table.keys.join(',').split(',').map(&:to_i)
+      list = precedence_ids.map do |n| 
+        all_ids.delete(n)
+        classe.get(n) # peut être nil, si destruction
+      end.compact
+      # On ajoute ceux qui n'ont jamais été choisis en précédence
+      all_ids.each { |nid| list << @table[nid] }
+    else
+      list = @items
+    end
+    cs = list.map do |item|
+      {name: tty_name_for(item, options), value: item}
+    end + [CHOIX_RENONCER]
+    cs.unshift(CHOIX_CREATE) if options[:create]
+
+    return cs
   end
 
   # @return le string à utiliser pour l'attribut :name de TTY prompt
@@ -256,8 +305,6 @@ class Manager
     @class_name ||= classe.name.to_s.split('::').last.downcase
   end
 
-
-
   # --- Implementation Managed Class Methods ---
 
   def prepare_class_methods
@@ -268,12 +315,22 @@ class Manager
     classe.define_singleton_method 'save_location' do
       return my.save_location
     end
+    classe.define_singleton_method 'get' do |item_id|
+      data_manager.get(item_id)
+    end
     if classe.methods.include?(:choose)
+      # Rien à faire
     else    
       classe.define_singleton_method 'choose' do |options = nil|
         return my.choose(options)
       end
     end
+  end
+
+  def get(item_id)
+    item_id = item_id.to_i
+    @table || load_data
+    @table[item_id]
   end
 
   # Add instance methods to managed class (:create, :edit, :display
@@ -313,7 +370,7 @@ class Manager
 
     prepare_save_methods
 
-    prepare_properties_methdos
+    prepare_properties_methods
 
   end
 
@@ -342,7 +399,7 @@ class Manager
       case save_format
       when :yaml
         classe.define_method "save" do
-          load_all unless my.full_loaded?
+          load_data unless my.full_loaded?
           if new?
             my.add(self) 
             @data.delete(:is_new)
@@ -351,7 +408,7 @@ class Manager
         end
       when :csv
         classe.define_method "save" do
-          load_all unless my.full_loaded?
+          load_data unless my.full_loaded?
           if new?
             my.add(self)
             @data.delete(:is_new)
@@ -365,7 +422,7 @@ class Manager
 
   end
 
-  def prepare_properties_methdos
+  def prepare_properties_methods
     #
     # Chaque propriété de DATA_PROPERTIES doit faire une méthode qui
     # permettra de récupérer et de définir la valeur
