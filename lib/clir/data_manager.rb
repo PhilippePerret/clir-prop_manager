@@ -8,6 +8,7 @@ require 'clir/data_manager/Property'
 require 'clir/data_manager/Displayer'
 require 'clir/data_manager/Editor'
 require 'clir/data_manager/Validator'
+require 'clir/data_manager/PrecedencedList'
 
 module Clir
   module DataManager

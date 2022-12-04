@@ -34,7 +34,8 @@ class Property
     # On utilise une édition différente en fonction du type de la
     # donnée
     # 
-    error = nil
+    error     = nil
+    question  = question(instance).jaune
     while true
       puts error.rouge if error
       new_value =
@@ -49,14 +50,17 @@ class Property
           else
             raise "Pour la propriété #{prop.inspect}, de type :id, la classe ##{relative_class} devrait être définie."
           end
-        when :string, :email
+        when :string, :email, :date, :prix
           # FIXED: Noter que pour le moment, on ne peut pas mettre
           # à nil (vide) quand une valeur est déjà définie.
-          Q.ask(question(instance).jaune, {default: defvalue})&.strip
+          Q.ask(question, {default: defvalue})&.strip
         when :select
-          Q.select(question(instance).jaune, values, {default:default_select_value(instance), per_page:values.count})
+          choices = select_values_with_precedences(instance)
+          value = Q.select(question, choices, {default:default_select_value(instance, choices), per_page:values.count})
+          values.set_last(value)
+          value
         when :bool
-          Q.select(question(instance).jaune, BOOLEAN_VALUES, {default: boolean_default_value(instance), per_page:BOOLEAN_VALUES.count})
+          Q.select(question, BOOLEAN_VALUES, {default: boolean_default_value(instance), per_page:BOOLEAN_VALUES.count})
         else
           puts "Je ne sais pas encore éditer une donnée de type #{type.inspect}.".orange
           sleep 3
@@ -134,14 +138,21 @@ class Property
     end
   end
 
+  def select_values_with_precedences(instance)
+    # values
+    uniq_name = "#{instance.class.name.to_s.gsub(/::/,'-')}-#{prop}".downcase
+    @values = PrecedencedList.new(values, uniq_name) unless values.instance_of?(PrecedencedList)
+    return values.to_prec
+  end
+
   # @return l'index de la valeur actuelle de l'instance pour la 
   # propriété courante, lorsque c'est un select (tty-prompt, en
   # valeur par défaut, ne supporte que l'index, ou le :name du menu)
   # Si la valeur n'est pas définie ou si elle est introuvable, on
   # retourne nil
-  def default_select_value(instance)
+  def default_select_value(instance, vals)
     cvalue = current_value(instance) || default(instance) || return
-    values.each_with_index do |dchoix, idx|
+    vals.each_with_index do |dchoix, idx|
       return idx + 1 if dchoix[:value] == cvalue
     end
     return nil

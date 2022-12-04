@@ -153,8 +153,6 @@ class Manager
   def choose_precedence_set(id)
     precedence_ids.delete(id)
     precedence_ids.unshift(id)
-    puts "Nouvelle liste = #{precedence_ids.join(' ')}".bleu
-    sleep 2
     File.write(precedence_list, precedence_ids.join(' '))
   end
 
