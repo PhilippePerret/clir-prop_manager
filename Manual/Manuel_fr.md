@@ -165,6 +165,27 @@ Si le nom de la classe contient des capitales, il sera décamélisé (`DataManag
 
 Si le nom de la classe est composé, les doubles doubles-points seront remplacés aussi par des tirets plats (`Edic::Produit` => `edic_produit` => `edic_produit_id`
 
+**Espace de nom**
+
+Attention : si la classe relative se trouve dans un espace de nom, même si c’est le même espace de nom que la classe en question, il faut indiquer cet espace de nom dans `:prop` :
+
+~~~ruby
+module EspaceNom
+  class User
+    # ...
+  end
+  
+  class MaClasseManaged
+    DATA_PROPERTIES = [
+    	# ...
+      {prop: espace_nom_user_id , name: "Propriétaire" ,type: :id ...}
+    ]
+  end
+end
+~~~
+
+
+
 ---
 
 ### Nom humain utilisé pour l’affichage de l’instance
