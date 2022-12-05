@@ -84,7 +84,13 @@ class PrecedencedList < Array
   end
 
   def self.folder
-    @@folder ||= mkdir(File.join(Dir.home, '.precedences'))
+    @@folder ||= begin
+      if test?
+        mkdir(File.join(Dir.home, 'TESTS', '.precedences'))
+      else
+        mkdir(File.join(Dir.home, '.precedences'))
+      end
+    end
   end
 end #/class PrecedencedList
 end #/module Clir

@@ -88,8 +88,9 @@ class Editor
   # Should be update after each user input
   # 
   # @return [choices, index_default]
-  # index_default is the first required property which is undefined
-  # (1-start)
+  # At creation, index_default is the first required property which
+  # is undefined (1-start)
+  # 
   def set_choices_with(instance)
     requirement_missing = false
     cs = manager.properties.map do |property|
@@ -122,6 +123,28 @@ class Editor
         index_default = property.index + 1 if index_default.nil?
       end
       choix = cs.shift
+      # 
+      # Faut-il utiliser une méthode de formatage d'affichage
+      # 
+      if isdef && property.format_method
+        mformat = property.format_method
+        if choix.respond_to?(mformat)
+          choix = choix.send(mformat)
+        elsif instance.respond_to?(mformat)
+          instance.send(mformat)
+        elsif property.prop.match?(/_ids?$/) && [:id, :ids].include?(property.type)
+          if property.relative_class
+            raise "Je connais la classe relative, je peux mettre en forme"
+          else
+            raise "Je ne connais pas la classe relative"
+          end
+        else
+          raise "Impossible de mettre au format avec #{mformat.inspect}"
+        end
+      end
+      # 
+      # Couleur en fonction de propriété requise ou non
+      # 
       if property.required?
         choix = choix.send(isdef ? :bleu : :rouge)
       end

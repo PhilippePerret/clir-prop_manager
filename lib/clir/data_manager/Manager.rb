@@ -115,6 +115,13 @@ class Manager
   #   :question   La question à poser ("Choisir" par défaut)
   #   :multi      Si true, on peut choisir plusieurs éléments
   #   :create     Si true, on peut créer un nouvel élément
+  #   :filter     Filtre à appliquer aux valeurs à afficher
+  #               Avec le filtre, les instances n'apparaitront pas
+  #               à l'écran, contrairement à :exclude.
+  #   :exclude    Liste d'identifiants qu'ils faut rendre "inchoisis-
+  #               sables".
+  #   :default    Quand :multi, les valeurs à sélectionner par défaut
+  #               C'est une liste d'identifiants.
   # 
   def choose(options = nil)
     # 
@@ -134,12 +141,26 @@ class Manager
     # Interaction
     # 
     if options[:multi]
-      choixs = Q.multi_select(options[:question], cs, {filter:true})
+      # 
+      # Menus sélectionnés par défaut
+      # 
+      selecteds = nil 
+      selecteds = get_default_choices(cs, options) if options[:default]
+      # 
+      # L'utilisateur procède aux choix
+      # 
+      choixs = Q.multi_select(options[:question], cs, {filter:true, default: selecteds, echo:false})
       if choixs.include?(:create)
         choixs.delete(:create)
         choixs << classe.new.create
       end
-      choixs.each { |choix| choose_precedence_set(choix.id) }
+      #
+      # Enregistrement de la précédence
+      # 
+      choixs.each { |choix| choix && choose_precedence_set(choix.id) }
+      # 
+      # Instances retournées
+      # 
       choixs
     else
       choix = Q.select(options[:question], cs, {per_page: 20, filter:true})
@@ -150,9 +171,24 @@ class Manager
     end
   end
 
+  ##
+  # @return la liste des indexes des menus sélectionnés dans +cs+
+  # Les sélectionnés sont définis par leur identifiant dans 
+  # options[:default]
+  # 
+  def get_default_choices(cs, options)
+    selecteds = options[:default]
+    ids_sels = []
+    cs.each_with_index do |dmenu, idx|
+      ids_sels << (idx + 1) if selecteds.include?(dmenu[:value])
+    end
+    return ids_sels
+  end
+
   def choose_precedence_set(id)
     precedence_ids.delete(id)
     precedence_ids.unshift(id)
+    mkdir(tmp_folder)
     File.write(precedence_list, precedence_ids.join(' '))
   end
 
@@ -165,7 +201,7 @@ class Manager
   end
 
   def precedence_list
-    @precedence_list ||= File.join(tmp_folder, "#{classe.name}.precedences")
+    @precedence_list ||= File.join(tmp_folder, "#{classe.name.to_s.gsub(/::/,'_').downcase}.precedences")
   end
 
   def tmp_folder
@@ -179,6 +215,8 @@ class Manager
   def get_choices_with_precedences(options)
     list = nil
     if File.exist?(precedence_list)
+      # puts "Le fichier #{precedence_list.inspect} existe".bleu
+      # sleep 10
       all_ids = @table.keys.join(',').split(',').map(&:to_i)
       list = precedence_ids.map do |n| 
         all_ids.delete(n)
@@ -189,12 +227,30 @@ class Manager
     else
       list = @items
     end
+    # 
+    # Filtrer la liste si nécessaire
+    # 
+    if options[:filter]
+      list = list.select do |item|
+        item_match_filter?(item, options[:filter])
+      end
+    end
+    # 
+    # On retourne des menus pour TTY-Prompt
+    # 
     cs = list.map do |item|
       {name: tty_name_for(item, options), value: item}
     end + [CHOIX_RENONCER]
     cs.unshift(CHOIX_CREATE) if options[:create]
 
     return cs
+  end
+
+  def item_match_filter?(item, filter)
+    filter.each do |key, expected|
+      return false if item.send(key) != expected
+    end
+    return true
   end
 
   # @return le string à utiliser pour l'attribut :name de TTY prompt
@@ -300,7 +356,7 @@ class Manager
 
   # Le nom simple de la classe propriétaire, sans module
   def class_name
-    @class_name ||= classe.name.to_s.split('::').last.downcase
+    @class_name ||= classe.name.to_s.split('::').last
   end
 
   # --- Implementation Managed Class Methods ---
@@ -321,6 +377,11 @@ class Manager
     else    
       classe.define_singleton_method 'choose' do |options = nil|
         return my.choose(options)
+      end
+    end
+    unless classe.respond_to?(:feminine?)
+      classe.define_singleton_method 'feminine?' do
+        return false
       end
     end
   end
@@ -438,7 +499,7 @@ class Manager
       # liens avec une autre classe (typiquement : user_id pour faire
       # référence à un user {User})
       # 
-      if prop.to_s.end_with?('_id')
+      if prop.to_s.match?(/_ids?$/)
         traite_property_as_other_class_instance(dproperty)
       end
     end
@@ -448,24 +509,40 @@ class Manager
   def traite_property_as_other_class_instance(dproperty)
     my = self
     prop        = dproperty[:prop]
-    class_min   = prop[0..-4]
+    last        = prop.end_with?('_ids') ? -5 : -4
+    class_min   = prop[0..last]
     other_class = get_classe_from(class_min)
     # puts "other_classe avec #{class_min.inspect} : #{other_class}"
     # sleep 4
     dproperty.merge!(relative_class: other_class)
     # 
-    # Les méthodes utiles pour la gestion de l'autre classe
+    # Les méthodes utiles pour la gestion de l'autre classe.
+    # Note : une méthode différente suivant _id ou _ids
     # 
-    classe.define_method "#{class_min}" do # p.e. def user; ... end
-      instace_variable_get("@#{class_min}") || begin
-        instace_variable_set(
-          "@#{class_min}", 
-          send("#{class_min}_class".to_sym).get(self.send(prop))
-        )
+    case true
+    when prop.end_with?('_ids')
+      classe.define_method "#{class_min}" do # p.e. def vente;
+        instance_variable_get("@#{class_min}") || begin
+          items = self.send(prop).map do |item_id|
+            other_class.get(item_id)
+          end
+          instance_variable_set("@#{class_min}", items)
+        end
       end
-    end
-    classe.define_method "#{class_min}=" do |owner| # p.e. user=
-      self.send("#{prop}=".to_sym, owner.id)
+    when prop.end_with?('_id')
+      classe.define_method "#{class_min}" do # p.e. def user; ... end
+        instance_variable_get("@#{class_min}") || begin
+          item = other_class.get(self.send(prop))
+          # puts "Je dois obtenir le #{prop.inspect} ##{self.send(prop).inspect}".jaune
+          # puts "Dans la classe #{other_class.name}".jaune
+          # puts "item = #{item.inspect}".jaune
+          # sleep 5
+          instance_variable_set("@#{class_min}", item)
+        end
+      end
+      classe.define_method "#{class_min}=" do |owner| # p.e. user=
+        self.send("#{prop}=".to_sym, owner.id)
+      end
     end
   end
 
@@ -474,7 +551,8 @@ class Manager
     instance.data = {id: __new_id, is_new: true}
     edit(instance, options)
     if not(instance.new?)
-      puts (MSG[:item_created] % {element:  class_name}).vert
+      key = classe.feminine? ? :item_created_fem : :item_created
+      puts (MSG[key] % {element:  class_name}).vert
     end
     return self # chainage
   end

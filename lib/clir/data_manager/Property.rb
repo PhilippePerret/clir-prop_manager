@@ -41,15 +41,27 @@ class Property
       new_value =
         case type
         when :id
+          # [N0001]
           # Cas spécial d'une propriété <>_id. Si tout a bien été
           # défini, DataManager a mis dans l'attribut other_class la
           # classe de l'élément.
           if relative_class
-            item = relative_class.choose(create: true)
+            item = relative_class.choose({create: true, filter: values_filter})
             item&.id
           else
-            raise "Pour la propriété #{prop.inspect}, de type :id, la classe ##{relative_class} devrait être définie."
+            raise ERRORS[:require_relative_class] % [prop.to_s, relative_class.to_s]
           end
+        when :ids
+          # Cf. [N0001] ci-dessus
+          if relative_class
+            multi_choose(instance, options)
+          else
+            raise ERRORS[:require_relative_class] % [prop.to_s, relative_class.to_s]
+          end
+        when :date
+          defvalue ||= Time.now.strftime(MSG[:date_format])
+          new_date = Q.ask(question, {default: defvalue})&.strip
+          
         when :string, :email, :date, :prix
           # FIXED: Noter que pour le moment, on ne peut pas mettre
           # à nil (vide) quand une valeur est déjà définie.
@@ -120,6 +132,40 @@ class Property
   # --- Functional Methods ---
 
   ##
+  # Permet de choisir des valeurs multiples, pour le moment plusieurs
+  # identifiants d'une classe relative.
+  # 
+  # La méthode doit être appelée après avoir vérifié que la 
+  # relative_class existait bien.
+  # 
+  def multi_choose(instance, options)
+    curvalue = current_value(instance) || []
+    # 
+    # La valeur propre du filtre
+    filter_for_instance = nil
+    if values_filter
+      filter_for_instance = {}
+      values_filter.each do |key, value|
+        if value.is_a?(Symbol) # => propriété de l'instance
+          value = instance.send(value)
+        end
+        filter_for_instance.merge!(key => value)
+      end
+    end
+    # 
+    # On demande toutes les instances choisies
+    # 
+    insts = relative_class.choose({multi:true, create: false, filter: filter_for_instance, default: curvalue})
+    curvalue = insts.map(&:id)
+    # puts "curvalue : #{curvalue.inspect}"
+    # 
+    # Valeur finale à retourner
+    # 
+    curvalue = nil if curvalue.empty?
+    return curvalue
+  end
+
+  ##
   # Si la propriété définit :itransform (méthode de transformation
   # de la donnée entrée), cette méthode est appelée pour transformer
   # la donnée.
@@ -159,14 +205,11 @@ class Property
   end
 
   # @prop La valeur actuelle de cette propriété
-  # 
   def current_value(instance)
     instance.send(prop)
   end
 
   # @prop La question à poser pour cette propriété
-  # 
-  # 
   def question(instance)
     if quest
       quest % instance.data
@@ -216,9 +259,10 @@ class Property
     end
     d
   end
+  def values_filter;    @values_filter  ||= data[:values_filter]  end
   def itransform;       @itransform     ||= data[:itransform]     end
   def relative_class;   @relative_class ||= data[:relative_class] end
-  def format_method;    @format_method  ||= data[:mformate]       end
+  def format_method;    @format_method  ||= data[:mformat]||data[:mformate]||data[:format_method] end
 
   BOOLEAN_VALUES = [
     {name: MSG[:yes]    , value: true   },

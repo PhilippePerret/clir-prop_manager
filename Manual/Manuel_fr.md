@@ -121,11 +121,29 @@ class MaClasse
 
 <a name="attributs-property"></a>
 
-###  Attributs d’une propriété
+##  Attributs d’une propriété
 
 Comme nous venons de le voir, chaque ligne (chaque item) de [`DATA_PROPERTIES`](#data-properties) définit une propriété de l’instance, comme on les appelle en ruby. Nous allons voir les arguments que doivent  ou peuvent comporter chaque *property*.
 
-#### `:prop` : Nom de la propriété, requise
+<a name="attributs-list"></a>
+
+### Liste des attributs
+
+* [**`:prop`**](#attribut-prop)
+* [**`:name`**](#attribut-name)
+* [**`:type`**](#attribut-type)
+* [**`:specs`**](#attribut-specs)
+* [**`:default`**](#attribut-default)
+* [**`:values`**](#attribut-values)
+* [**`:values_filter`**](#attribut-values_filter)
+* [**`:itransform`**](#attribut-itransform) (transformation immédiate de la valeur entrée)
+* [**`:mformat`**](#attribut-mformat) (transformation de la valeur pour affichage)
+
+---
+
+<a name="attribut-prop"></a>
+
+### `:prop` : Nom de la propriété, requise
 
 `:prop` définit le nom de la propriété, pour savoir si c’est l’identifiant, le nom, la date de début etc. 
 
@@ -165,7 +183,26 @@ Si le nom de la classe contient des capitales, il sera décamélisé (`DataManag
 
 Si le nom de la classe est composé, les doubles doubles-points seront remplacés aussi par des tirets plats (`Edic::Produit` => `edic_produit` => `edic_produit_id`
 
-**Espace de nom**
+<a name="liste-elements"></a>
+
+#### Propriété spéciale : `<classe min>_ids`
+
+Similaire à la classe précédente, mais pour une liste d’éléments. Le type est alors `:ids`
+
+~~~ruby
+DATA_PROPERTIES = [
+  # ...
+  {prop: espace_nom_user_ids, name: "Partitipantes", type: :ids, values_filter: {sexe: 'F'}, ...}
+]
+~~~
+
+Le code ci-dessus permet de choisir une liste de femmes (de “participantes”).
+
+---
+
+<a name="espace-de-nom"></a>
+
+#### Espace de nom en question
 
 Attention : si la classe relative se trouve dans un espace de nom, même si c’est le même espace de nom que la classe en question, il faut indiquer cet espace de nom dans `:prop` :
 
@@ -184,6 +221,160 @@ module EspaceNom
 end
 ~~~
 
+De la même manière, il faut noter que la propriété-méthode qui sera créé, pour récupérer l’instance, comportera cet espace de nom. Donc, dans le programme il faudra utiliser :
+
+~~~ruby
+instance.espace_nom_user
+# => instance EspaceNom::User
+~~~
+
+Pour simplifier le code, on peut définir la classe managée de cette manière :
+
+~~~ruby
+require 'clir/data-manager'
+
+class MaClasseManaged
+  DATA_PROPERTIES = [
+    # ...
+    {prop: espace_user_id: name: "Propriétaire", type: :id}
+    ]
+end #/class
+
+Clir::DataManager.new(MaClasseManaged)
+
+class MaClasseManaged
+  
+  
+  alias :user :espace_user
+  # et : alias :user_id :espace_user_id
+  
+end
+~~~
+
+De cette manière on pourra facilement utiliser :
+
+~~~ruby
+item = MaClasseManaged.new
+item.user
+# => Instance User de l'item
+~~~
+
+
+
+---
+
+<a name="attribut-name"></a>
+
+### Attribut `:name`
+
+Nom humain de la propriété, qui sera utilisé en label pour afficher les données de l’instance. C’est forcément un `String` (TODO: pour le moment en tout cas, car on pourrait imaginer que ça soit une procédure à évaluer en fonction de l’instance).
+
+---
+
+<a name="attribut-type"></a>
+
+### Attribut `:type`
+
+#### Liste des types
+
+~~~bash
+:string 		Une chaine quelconque
+:number 		Un nombre quelconque
+:select 		Valeur dans une liste (fournie par :values)
+:date  			Date de type JJ/MM/AAAA
+:mail				Un email valide
+:id 				ID d’une instance connue
+:ids 				Liste d’IDs d’instance connues
+:prix 			Un prix (nombre flottant)
+~~~
+
+---
+
+<a name="attribut-specs"></a>
+
+### Attribut `:specs`
+
+Spécificité de la propriété, permet de savoir si elle est requise (`REQUIRED`), éditable (`EDITABLE`), affichable (`DISPLAYABLE`), supprimable (`REMOVABLE`) ou toutes ces propriétés en même temps (`ALL`).
+
+---
+
+<a name="attribut-default"></a>
+
+### Attribut `:default`
+
+Valeur par défaut.
+
+---
+
+<a name="attribut-values"></a>
+
+### Attribut `:values`
+
+S'emploie pour un type `:select`.
+
+---
+
+<a name="attribut-values_filter"></a>
+
+### Attribut `:values_filter`
+
+Filtre à utiliser pour les `:values` en fonction de l'instance.
+
+Peut s'utiliser pour les types `:select` et les `:prop` de type `:<class min>_ids` (type `:ids`).
+
+Cette valeur doit être une table (un dictionnaire) qui contient en clé les propriétés qui devront être filtrées et en valeur le filtrage à appliquer. Par exemple :
+
+~~~ruby
+{values: clients, values_filter: {sexe: 'F'} ...}
+~~~
+
+… filtrera uniquement les clientes, puisqu’on cherchera dans les clients les instances dont la valeur `:sexe` est à `“F"`.
+
+La valeur de la propriété peut être aussi un `Symbol`. C’est alors une propriété de l’instance. Un cas typique est le cas d’une facture. Une facture est donc une instance qui rassemble plusieurs achats d’un client (donc plusieurs ventes). Pour pouvoir choisir les ventes, on ne doit afficher que les achats du client. On utilise donc toutes les ressources de *DataManager* en définissant la propriété qui va consigner les identifiants des achats de cette manière :
+
+~~~ruby
+class Facture
+
+  DATA_PROPERTIES = [
+    {prop: client_id, type: id, name: "Client"},
+		{prop: vente_ids, type: ids: name: "Achats concernés", 
+      values_filter: {client_id: :client_id}
+	]
+
+end
+~~~
+
+**EXPLICATION** 
+
+La première propriété, `:client_id`, de type `:id`, permet de choisir automatiquement un client dans la liste des clients. Elle prend comme valeur l’identifiant dudit client.
+
+La seconde propriété, `:vente_ids`, de type `:ids`, permet de consigner les ventes concernées par la facture. Pour ne pas afficher toutes les ventes, mais seulement celles du client, le filtre `{client_id: client_id}` signifie : “ne prendre que les ventes dont le `client_id` (clé du filtre) n’est égal à la valeur `:client_id` de la propriété de la facture.
+
+La **clé** correspond dont à une propriété de la chose concernée (ici les ventes)
+
+La **valeur** correspond à une propriété de l’instance en édition (ici la facture).
+
+---
+
+<a name="attribut-itransform"></a>
+
+### Attribut `:itransform`
+
+Transformation immédiate de la valeur entrée par l'utilisateur. Peut-être une `Proc` ou un `Symbol`.
+
+Cf. [Formatage des données](#formatage-affichage).
+
+---
+
+<a name="attribut-mformat"></a>
+
+### Attribut `:mformat`
+
+Définition de la méthode de transformation de la donnée à l'affichage. Peut-être une `Proc` ou un `Symbol`.
+
+Répond aux mêmes critères que [`itransform`](#attribut-itransform) mais s'applique seulement à l'affichage de la donnée.
+
+Cf. [Formatage des données](#formatage-affichage).
 
 
 ---
@@ -318,16 +509,19 @@ end #/class
 
 
 
-### Transformation de la donnée entrée
+### Transformation de la donnée en entrée ou en sortie
 
 Quand on attend un nom (patronyme), on peut vouloir systématiquement le passer en capitale, quelle que soit l’entrée de l’utilisateur.
 
-Pour ce faire, dans la donnée de la propriété dans `DATA_PROPERTIES`, on ajoute l’attribut `:itransform` (qui signifie “input transform” ou “transformation de la donnée entrée”.
+Pour ce faire, dans la donnée de la propriété dans `DATA_PROPERTIES`, on ajoute l’attribut `:itransform` (qui signifie “input transform” ou “transformation de la donnée entrée”) qui transforme la donnée entrée (donc la donnée qui sera enregistrée) ou l’attribut `:mformat` qui transforme la valeur enregistrée seulement à l’affichage.
 
-Cette attribut peut avoir différents types de valeur :
+Ces attributs peuvent avoir différents types de valeur :
 
 * **une procédure** qui reçoit en premier argument l’instance et en second argument la valeur entrée
-* **un symbol**. C’est alors une méthode à laquelle répond soit l’instance, sans la valeur. Par exemple, pour notre exemple, nous pourrions avoir `itransform: :upcase`. L’instance, a priori, ne répondant pas à cette méthode, c’est la valeur qui sera affectée.
+* **un symbol**. qui définit :
+  * soit une **méthode de la valeur** (p.e. `:upcase` pour pour un `String` ou `:round`  pour un nombre)
+  * soit une **méthode de l’instance** — qui reçoit en premier argument la valeur.
+
 
 ---
 
@@ -363,6 +557,30 @@ MaClasseManaged.choose(options = nil)
 ## Les petits plus
 
 Le fait de travailler avec `Clir::DataManager` offre de nombreux avantages, comme on a pu le voir. Il existe cependant quelques petites astuces à connaitre.
+
+### Messages fémininisés
+
+Pour obtenir des messages adaptés au genre d’une classe, on peut définir la méthode de classe `::feminine?` qui reverra true dans le cas d’une classe féminine. Par exemple :
+
+~~~ruby
+class PaireDeLunettes
+  def self.feminine?; true end
+end
+
+# Produira par exemple le message suivant à la création d'une nouvelle
+# instance : "Nouvelle PaireDeLunettes créée avec succès !"
+
+class SacAMain
+  def self.feminine?; false end # <= mais inutile, car par défaut
+end
+
+# Produira par exemple le message suivant à la création d'une nouvelle
+# instance : "Nouveau SacAMain créé avec succès !"
+
+
+~~~
+
+
 
 ### Filtrer la liste des propriétés
 
