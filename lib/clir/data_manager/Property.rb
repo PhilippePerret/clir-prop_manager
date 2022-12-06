@@ -119,11 +119,15 @@ class Property
 
   def formated_value_in(instance)
     return '---' if instance.send(prop).nil?
-    formate_method = "f_#{prop}".to_sym
-    if format_method
-      instance.send(format_method)
-    elsif instance.respond_to?(formate_method)
-      instance.send(formate_method)
+    formatage_method = "f_#{prop}".to_sym
+    if format_method # :mformat dans la définition de la propriété
+      if format_method.is_a?(Proc)
+        format_method.call(current_value(instance), instance)
+      else
+        instance.send(format_method)
+      end
+    elsif instance.respond_to?(formatage_method)
+      instance.send(formatage_method)
     else
       instance.send(prop)
     end

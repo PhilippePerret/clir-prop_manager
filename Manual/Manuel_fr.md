@@ -558,7 +558,7 @@ MaClasseManaged.choose(options = nil)
 
 Le fait de travailler avec `Clir::DataManager` offre de nombreux avantages, comme on a pu le voir. Il existe cependant quelques petites astuces à connaitre.
 
-### Messages fémininisés
+### Messages féminisés
 
 Pour obtenir des messages adaptés au genre d’une classe, on peut définir la méthode de classe `::feminine?` qui reverra true dans le cas d’une classe féminine. Par exemple :
 

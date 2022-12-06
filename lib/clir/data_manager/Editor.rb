@@ -93,18 +93,24 @@ class Editor
   # 
   def set_choices_with(instance)
     requirement_missing = false
+    max_label_width = 0
     cs = manager.properties.map do |property|
       next if not(property.editable?)
       pvalue = property.formated_value_in(instance)
       pname  = property.name
+      max_label_width = pname.length if pname.length > max_label_width
       [pname, pvalue]
     end.compact
 
+    # Ajout de la gouttière entre label et valeur
+    max_label_width += 4
+
     index_default = nil
-    cs = labelize(cs).split("\n")
+    # cs = labelize(cs).split("\n")
     cs = manager.properties.map do |property|
       next if not(property.editable?)
-      isdef = instance.send(property.prop) != nil
+      curval = instance.send(property.prop)
+      isdef  = curval != nil
       #
       # Si c'est une création d'instance, on se placera automati-
       # quement sur le premier champ (property) qui n'est pas définie
@@ -122,26 +128,13 @@ class Editor
         requirement_missing = true
         index_default = property.index + 1 if index_default.nil?
       end
-      choix = cs.shift
+      # choix = cs.shift
+      # choix = "#{property.name.ljust(max_label_width)}#{curval}"
       # 
       # Faut-il utiliser une méthode de formatage d'affichage
       # 
-      if isdef && property.format_method
-        mformat = property.format_method
-        if choix.respond_to?(mformat)
-          choix = choix.send(mformat)
-        elsif instance.respond_to?(mformat)
-          instance.send(mformat)
-        elsif property.prop.match?(/_ids?$/) && [:id, :ids].include?(property.type)
-          if property.relative_class
-            raise "Je connais la classe relative, je peux mettre en forme"
-          else
-            raise "Je ne connais pas la classe relative"
-          end
-        else
-          raise "Impossible de mettre au format avec #{mformat.inspect}"
-        end
-      end
+      fvalue = choix_formated(curval, instance, property)
+      choix = "#{property.name.ljust(max_label_width)}#{fvalue}"
       # 
       # Couleur en fonction de propriété requise ou non
       # 
@@ -149,7 +142,6 @@ class Editor
         choix = choix.send(isdef ? :bleu : :rouge)
       end
       {name: choix, value: property}
-      # {name: choix.send(isdef ? :vert : :blanc), value: property}
     end.compact
 
     # 
@@ -173,6 +165,53 @@ class Editor
     # On retourne la liste des choix et l'item sélectionné
     # 
     return [cs, index_default]
+  end
+
+  # @return la valeur courante pour la propriété +property+ dans
+  # +instance+ formatée comme elle doit l'être dans l'affichage
+  # normal des informations.
+  # 
+  # La difficulté (qui fait la force de DataManager) réside dans le
+  # fait que ce formatage peut être défini de plein de façons
+  # différentes.
+  # 
+  # @param value    {Any} Valeur actuelle à afficher
+  # @param instance {Any} L'instance éditée, quelle qu'elle soit
+  # @param property {DataManager::Property}
+  # 
+  def choix_formated(value, instance, property)
+    if value.nil?
+      return '---'
+    elsif property.format_method
+      # 
+      # Une méthode de formatage est définie
+      # 
+      return property.formated_value_in(instance)
+    elsif property.prop.match?(/_ids?$/) && [:id, :ids].include?(property.type)
+      # 
+      # Propriété avec classe relative
+      # 
+      if property.relative_class
+        dmanager = property.relative_class.data_manager
+        if property.type == :id
+          # inst = property.relative_class.get(property.current_value(instance))
+          inst = property.relative_class.get(value)
+          return dmanager.tty_name_for(inst, nil)
+        elsif property.type == :ids
+          return property.current_value(instance).map do |id|
+            inst = property.relative_class.get(id)
+            dmanager.tty_name_for(inst, nil)
+          end.join(', ')
+        end
+      else
+        raise "Je ne connais pas la classe relative"
+      end
+    else
+      # 
+      # Aucune méthode de formatage
+      # 
+      return value
+    end
   end
 
 end #/class Editor
