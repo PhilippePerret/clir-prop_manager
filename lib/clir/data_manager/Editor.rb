@@ -133,8 +133,8 @@ class Editor
       # 
       # Faut-il utiliser une méthode de formatage d'affichage
       # 
-      fvalue = choix_formated(curval, instance, property)
-      choix = "#{property.name.ljust(max_label_width)}#{fvalue}"
+      fvalue  = property.formated_value_in(instance)
+      choix   = "#{property.name.ljust(max_label_width)}#{fvalue}"
       # 
       # Couleur en fonction de propriété requise ou non
       # 
@@ -165,53 +165,6 @@ class Editor
     # On retourne la liste des choix et l'item sélectionné
     # 
     return [cs, index_default]
-  end
-
-  # @return la valeur courante pour la propriété +property+ dans
-  # +instance+ formatée comme elle doit l'être dans l'affichage
-  # normal des informations.
-  # 
-  # La difficulté (qui fait la force de DataManager) réside dans le
-  # fait que ce formatage peut être défini de plein de façons
-  # différentes.
-  # 
-  # @param value    {Any} Valeur actuelle à afficher
-  # @param instance {Any} L'instance éditée, quelle qu'elle soit
-  # @param property {DataManager::Property}
-  # 
-  def choix_formated(value, instance, property)
-    if value.nil?
-      return '---'
-    elsif property.format_method
-      # 
-      # Une méthode de formatage est définie
-      # 
-      return property.formated_value_in(instance)
-    elsif property.prop.match?(/_ids?$/) && [:id, :ids].include?(property.type)
-      # 
-      # Propriété avec classe relative
-      # 
-      if property.relative_class
-        dmanager = property.relative_class.data_manager
-        if property.type == :id
-          # inst = property.relative_class.get(property.current_value(instance))
-          inst = property.relative_class.get(value)
-          return dmanager.tty_name_for(inst, nil)
-        elsif property.type == :ids
-          return property.current_value(instance).map do |id|
-            inst = property.relative_class.get(id)
-            dmanager.tty_name_for(inst, nil)
-          end.join(', ')
-        end
-      else
-        raise "Je ne connais pas la classe relative"
-      end
-    else
-      # 
-      # Aucune méthode de formatage
-      # 
-      return value
-    end
   end
 
 end #/class Editor

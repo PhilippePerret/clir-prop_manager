@@ -27,12 +27,15 @@ class Manager
       File.write(last_id_path, id.to_s)
       return id
     when :file
-      @last_id || load_data
+      @last_id || begin 
+        load_data
+        @last_id
+      end
+      return @last_id += 1
     when :conf
       puts "Je ne sais pas encore gérer le système de sauvegarde :conf.".orange
       raise(ExitSilently)
     end
-    1
   end
 
   attr_reader :classe
@@ -600,8 +603,9 @@ class Manager
   # --- Data Methods ---
 
   def load_data
-    @table = {}
-    @items = []
+    @table    = {}
+    @items    = []
+    @last_id  = 0
     case save_system
     when :card
       load_data_from_cards
@@ -611,9 +615,11 @@ class Manager
       inst = classe.new(ditem)
       @table.merge!(inst.id => inst)
       @items << inst
+      @last_id = 0 + inst.id if inst.id > @last_id
     end
     @is_full_loaded = true
   end
+
   def load_data_from_uniq_file
     if File.exist?(save_location)
       case save_format

@@ -69,7 +69,9 @@ class PrecedencedList < Array
 
   def precedences
     @precedences ||= begin
-      if precedence_exist?      
+      if precedence_exist?
+        # puts "Je lis le fichier de précédence : #{path}".orange
+        # sleep 4
         File.read(path).split("\n")
       else [] end
     end

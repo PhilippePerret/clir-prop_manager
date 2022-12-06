@@ -14,10 +14,12 @@ module DataManager
       bas_save_format: '%s@@save_format doit être :csv ou :yaml exclusivement.',
       no_csv_format_with_card: 'L’enregistrement par fiche (:card) ne permet pas le format :csv.',
       require_relative_class: 'Pour la propriété "%s", la classe relative doit absolument existée, correspondant au nom de la propriété sans _id(s).',
+      choice_unfound_in_choices_list: "Impossible de trouver la valeur (:value) '%s' dans la liste des valeurs de la propriété %s…",
 
       required_property: "La propriété %s est absolument requise.",
       invalid_mail: "Le mail '%s' est invalide.",
       invalid_date: "La date '%s' est invalide (format requis : JJ/MM/AAAA)",
+      invalid_url: "L'URL '%s' est invalide : %s.",
     },
     'us' => {
       undefined_class: 'Class %s is undefined…',
@@ -31,10 +33,12 @@ module DataManager
       bas_save_format: '%s@@save_format should be exclusively :csv or :yaml.',
       no_csv_format_with_card: 'Save system by card (:card) does not allow :csv format.',
       require_relative_class: 'For property "%s", a relative class should be defined, corresponding to property name.',
+      choice_unfound_in_choices_list: "Unfound value (:value) '%s' in values of %s property…",
     
       required_property: "Property %s is required.",
       invalid_mail: "Invalid email address '%s'.",
       invalid_date: "Invalid date '%s' (format: MM/DD/YYYY)",
+      invalid_url: "Invalid URL '%s'. Reason: %s.",
     }
 
   }

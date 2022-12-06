@@ -26,6 +26,16 @@ class Validator
   # répondre à la méthode ::get pour obtenir une autre instance.
   # 
   def valid?(property, new_value, instance)
+    #
+    # Une propriété requise doit exister
+    # 
+    if property.required? && (!new_value || new_value.to_s.empty?)
+      return ERRORS[:required_property] % property.name
+    end
+
+    # 
+    # Un email
+    # 
     if property.type == :email && new_value && not(mail_valid?(new_value))
       return ERRORS[:invalid_mail] % new_value
     end
@@ -38,10 +48,10 @@ class Validator
     end
 
     #
-    # Une propriété requise doit exister
-    # 
-    if property.required? && (!new_value || new_value.to_s.empty?)
-      return ERRORS[:required_property] % property.name
+    # Une URL
+    #
+    if property.type == :url && new_value && (error_url = url_invalid?(new_value))
+      return ERRORS[:invalid_url] % [new_value, error_url]
     end
 
     return nil # OK
@@ -65,6 +75,24 @@ class Validator
       return false
     end
     return true
+  end
+
+  # Noter que cette méthode fonctionne à l'inverse des autres : elle
+  # retourne un message d'erreur en cas d'invalidité et elle ne
+  # retourne rien si tout est OK
+  # 
+  def url_invalid?(url)
+    request = nil
+    require 'net/http'
+    uri = URI(url)
+    Net::HTTP.get(uri)
+    return nil # ok
+  rescue Exception => e
+    return e.message
+  # ensure
+  #   puts "request: #{request.inspect}"
+  #   sleep 10
+  #   exit
   end
 
 end #/class Validator

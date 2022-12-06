@@ -61,14 +61,25 @@ class Property
         when :date
           defvalue ||= Time.now.strftime(MSG[:date_format])
           new_date = Q.ask(question, {default: defvalue})&.strip
-          
-        when :string, :email, :date, :prix
+        when :string, :email, :date, :prix, :url
           # FIXED: Noter que pour le moment, on ne peut pas mettre
           # à nil (vide) quand une valeur est déjà définie.
-          Q.ask(question, {default: defvalue})&.strip
+          nval = Q.ask(question, {default: defvalue})&.strip
+          unless nval.nil?
+            case type
+            when :prix
+              nval = nval.to_f
+            when :url
+              nval = "https://#{nval}" unless nval.start_with?('http')
+            end
+          end
+          nval
         when :select
+          # 
+          # Type :select
+          # 
           choices = select_values_with_precedences(instance)
-          value = Q.select(question, choices, {default:default_select_value(instance, choices), per_page:values.count})
+          value = Q.select(question, choices, {default:default_select_value(instance, choices), per_page:choices.count})
           values.set_last(value)
           value
         when :bool
@@ -118,20 +129,77 @@ class Property
   # --- Helpers Methods ---
 
   def formated_value_in(instance)
-    return '---' if instance.send(prop).nil?
-    formatage_method = "f_#{prop}".to_sym
-    if format_method # :mformat dans la définition de la propriété
+    curval = instance.send(prop)
+    if curval.nil?
+      # 
+      # Value non définie
+      # 
+      return '---'
+    elsif format_method # :mformat dans la définition de la propriété
+      # 
+      # Si la propriété définit une valeur de formatage explicitement
+      # 
       if format_method.is_a?(Proc)
         format_method.call(current_value(instance), instance)
       else
         instance.send(format_method)
       end
-    elsif instance.respond_to?(formatage_method)
-      instance.send(formatage_method)
+    elsif instance.respond_to?("f_#{prop}".to_sym)
+      # 
+      # Si l'instance définit la méthode de formatage
+      # 
+      instance.send("f_#{prop}".to_sym)
+    elsif prop.match?(/_ids?$/) && [:id, :ids].include?(type)
+      # 
+      # Propriété avec classe relative
+      # 
+      if relative_class
+        dmanager = relative_class.data_manager
+        if type == :id
+          # inst = relative_class.get(current_value(instance))
+          inst = relative_class.get(curval)
+          return dmanager.tty_name_for(inst, nil)
+        elsif type == :ids
+          return curval.map do |id|
+            inst = relative_class.get(id)
+            dmanager.tty_name_for(inst, nil)
+          end.join(', ')
+        end
+      else
+        raise "Je ne connais pas la classe relative"
+      end
+    elsif type == :select && values
+      #
+      # Propriété avec des values (on renvoie :full_name ou :name
+      # du choix correspondant)
+      # 
+      values.each do |dchoix|
+        if dchoix[:value] == curval
+          return dchoix[:full_name]||dchoix[:name]
+        end
+      end
+      raise ERRORS[:choice_unfound_in_choices_list] % [curval, self.name]
     else
-      instance.send(prop)
+      # 
+      # En dernier recours, la valeur telle quelle
+      # 
+      curval
     end
   end
+  # def formated_value_in(instance)
+  #   return '---' if instance.send(prop).nil?
+  #   if format_method # :mformat dans la définition de la propriété
+  #     if format_method.is_a?(Proc)
+  #       format_method.call(current_value(instance), instance)
+  #     else
+  #       instance.send(format_method)
+  #     end
+  #   elsif instance.respond_to?("f_#{prop}".to_sym)
+  #     instance.send("f_#{prop}".to_sym)
+  #   else
+  #     instance.send(prop)
+  #   end
+  # end
 
   # --- Functional Methods ---
 
@@ -189,9 +257,9 @@ class Property
   end
 
   def select_values_with_precedences(instance)
-    # values
     uniq_name = "#{instance.class.name.to_s.gsub(/::/,'-')}-#{prop}".downcase
-    @values = PrecedencedList.new(values, uniq_name) unless values.instance_of?(PrecedencedList)
+    vs = values(instance)
+    @values = PrecedencedList.new(vs, uniq_name) unless vs.instance_of?(PrecedencedList)
     return values.to_prec
   end
 
@@ -248,7 +316,25 @@ class Property
   def prop;     @prop     ||= data[:prop]     end
   def type;     @type     ||= data[:type]     end
   def quest;    @quest    ||= data[:quest]    end
-  def values;   @values   ||= data[:values]   end
+  def values(instance = nil)
+    @values ||= begin # note : elle sera transformée en liste avec
+                      # précédences à la première utilisation.
+      vs = data[:values]
+      if vs.is_a?(Symbol)
+        if manager.classe.respond_to?(vs)
+          manager.classe.send(vs)
+        elsif manager.respond_to?(vs)
+          manager.send(vs)
+        else
+          raise "Personne ne semble comprendre la méthode #{vs.inspect}"
+        end
+      elsif vs.is_a?(Proc)
+        vs.call(instance)
+      else
+        vs
+      end
+    end
+  end
   def default(instance)
     d = data[:default]
     d = d.call(instance) if d.is_a?(Proc)
