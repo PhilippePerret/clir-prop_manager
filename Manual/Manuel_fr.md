@@ -384,7 +384,13 @@ Cf. [Formatage des données](#formatage-affichage).
 
 L’attribut `:if` permet de déterminer si la propriété doit appartenir à l’instance, doit être défini. Par exemple, pour un certain produit il peut exister des propriétés spéciales qui n’appartiennent qu’à lui.
 
-Cet attribut peut être une `Proc`édure. Elle reçoit alors en argument l’instance. Par exemple :
+Peut être :
+
+* un procédure (`Proc`),
+* une méthode de l’instance (`Symbol`),
+* une valeur booléenne explicite.
+
+Cet attribut peut être une `Proc`édure. Cette procédure reçoit en argument l’instance et doit retourner `true` ou `false`. Par exemple :
 
 ~~~ruby
 {prop: :cover, ... , if: Proc.new { |inst| inst.type == 'livre' }

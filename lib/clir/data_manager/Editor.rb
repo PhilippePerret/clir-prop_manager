@@ -77,7 +77,7 @@ class Editor
   # pour l'instance donnée
   def all_required?(instance)
     manager.properties.each do |property|
-      if property.required? && instance.send(property.prop).nil?
+      if property.required?(instance) && instance.send(property.prop).nil?
         return false
       end
     end
