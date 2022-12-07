@@ -15,6 +15,7 @@ module DataManager
       no_csv_format_with_card: 'L’enregistrement par fiche (:card) ne permet pas le format :csv.',
       require_relative_class: 'Pour la propriété "%s", la classe relative doit absolument existée, correspondant au nom de la propriété sans _id(s).',
       choice_unfound_in_choices_list: "Impossible de trouver la valeur (:value) '%s' dans la liste des valeurs de la propriété %s…",
+      unknown_if_attribut: "Je ne sais pas traiter la valeur %s pour l'attribut :if…",
 
       required_property: "La propriété %s est absolument requise.",
       invalid_mail: "Le mail '%s' est invalide.",
@@ -34,6 +35,7 @@ module DataManager
       no_csv_format_with_card: 'Save system by card (:card) does not allow :csv format.',
       require_relative_class: 'For property "%s", a relative class should be defined, corresponding to property name.',
       choice_unfound_in_choices_list: "Unfound value (:value) '%s' in values of %s property…",
+      unknown_if_attribut: "Can't treat %s value for :if attribute…",
     
       required_property: "Property %s is required.",
       invalid_mail: "Invalid email address '%s'.",
@@ -59,6 +61,7 @@ module DataManager
       data_not_saved_cancel: "Les données n'ont pas été sauvegardées. Voulez-vous vraiment renoncer et les perdre ?",
       item_created: "Nouveau %{element} créé avec succès !",
       item_created_fem: "Nouvelle %{element} créée avec succès !",
+
     },
     'us' => {
       date_format:    '%m/%d/%Y',

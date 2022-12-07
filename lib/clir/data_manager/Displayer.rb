@@ -17,7 +17,7 @@ class Displayer
   def show(instance, options)
     liste = []
     manager.each_property do |property|
-      next if not(property.displayable?)
+      next if not(property.displayable?(instance))
       # puts "Je dois afficher la propriété @#{property.prop} de specs #{property.specs}"
       liste << [property.name, property.formated_value_in(instance)]
     end

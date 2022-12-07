@@ -376,6 +376,31 @@ Répond aux mêmes critères que [`itransform`](#attribut-itransform) mais s'app
 
 Cf. [Formatage des données](#formatage-affichage).
 
+---
+
+<a name="attribut-if"></a>
+
+### Attribut `:if`
+
+L’attribut `:if` permet de déterminer si la propriété doit appartenir à l’instance, doit être défini. Par exemple, pour un certain produit il peut exister des propriétés spéciales qui n’appartiennent qu’à lui.
+
+Cet attribut peut être une `Proc`édure. Elle reçoit alors en argument l’instance. Par exemple :
+
+~~~ruby
+{prop: :cover, ... , if: Proc.new { |inst| inst.type == 'livre' }
+~~~
+
+Dans le cas ci-dessus, la propriété `:cover` définissant la couverture ne sera défini (éditable, affichable) que si la propriété `type`du produit est ‘livre’.
+
+L’attribut peut être également une méthode (prédicate certainement) de l’instance. C’est alors un `{Symbol}`.
+
+~~~ruby
+{prop: :cover, ... , if: :livre?}
+# => Seulement si <instance>.livre? retourne true
+~~~
+
+
+
 
 ---
 
@@ -461,6 +486,14 @@ Notez que ces méthodes sont présentées par ordre inverse de précédence. C�
 2. redéfinition de la méthode générale de classe (par exemple `::choose`),
 3. à égalité : méthode d’instance `#name4tty` (retournant un string, la valeur à afficher, ou bien un symbol, la méthode à utiliser)
 4. la deuxième propriété définie dans les [données des propriétés][].
+
+---
+
+<a name="conditional-property"></a>
+
+## Propriété conditionnelle
+
+Cf. l'[attribut `:if`](#attribut-if)
 
 ---
 

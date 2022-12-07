@@ -292,20 +292,38 @@ class Property
 
   # --- Predicate Methods ---
 
-  def required?
+  def required?(instance)
+    if_able?(instance) || return
     :TRUE == @isrequired ||= true_or_false(specs & REQUIRED > 0)
   end
 
-  def displayable?
+  def displayable?(instance)
+    if_able?(instance) || return
     :TRUE == @isdisplayable ||= true_or_false(specs & DISPLAYABLE > 0)
   end
 
-  def editable?
+  def editable?(instance)
+    if_able?(instance) || return
     :TRUE == @iseditable ||= true_or_false(specs & EDITABLE > 0)
   end
 
-  def removable?
+  def removable?(instance)
+    if_able?(instance) || return
     :TRUE == @isremovable ||= true_or_false(specs & REMOVABLE > 0)
+  end
+
+  # @return TRUE si la propriété :if n'est pas définie ou si elle
+  # retourne la valeur true (donc elle retourne true quand la 
+  # propriété existe pour l'instance donnée)
+  def if_able?(instance)
+    return true if if_attr.nil?
+    case if_attr
+    when Symbol then instance.send(if_attr)
+    when Proc   then if_attr.call(instance)
+    when TrueClass, FalseClass then if_attr
+    else
+      raise ERRORS[:unknown_if_attribut] % "#{if_attr.inspect}:#{if_attr.class}"
+    end
   end
 
   # --- Hard Coded Properties ---
@@ -316,6 +334,7 @@ class Property
   def prop;     @prop     ||= data[:prop]     end
   def type;     @type     ||= data[:type]     end
   def quest;    @quest    ||= data[:quest]    end
+  def if_attr;  @ifattr   ||= data[:if]       end
   def values(instance = nil)
     @values ||= begin # note : elle sera transformée en liste avec
                       # précédences à la première utilisation.

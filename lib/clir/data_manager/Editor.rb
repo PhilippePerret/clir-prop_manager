@@ -95,7 +95,7 @@ class Editor
     requirement_missing = false
     max_label_width = 0
     cs = manager.properties.map do |property|
-      next if not(property.editable?)
+      next if not(property.editable?(instance))
       pvalue = property.formated_value_in(instance)
       pname  = property.name
       max_label_width = pname.length if pname.length > max_label_width
@@ -108,7 +108,7 @@ class Editor
     index_default = nil
     # cs = labelize(cs).split("\n")
     cs = manager.properties.map do |property|
-      next if not(property.editable?)
+      next if not(property.editable?(instance))
       curval = instance.send(property.prop)
       isdef  = curval != nil
       #
@@ -124,7 +124,7 @@ class Editor
       # possibilité d'enregistrer. On en profite aussi, si c'est la
       # première, pour définir l'index par défaut
       # 
-      if property.required? && not(isdef)
+      if property.required?(instance) && not(isdef)
         requirement_missing = true
         index_default = property.index + 1 if index_default.nil?
       end
@@ -138,7 +138,7 @@ class Editor
       # 
       # Couleur en fonction de propriété requise ou non
       # 
-      if property.required?
+      if property.required?(instance)
         choix = choix.send(isdef ? :bleu : :rouge)
       end
       {name: choix, value: property}

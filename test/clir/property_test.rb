@@ -18,20 +18,21 @@ class Clir::DataManagerPropertyTest < Minitest::Test
   end
 
   def test_property_responds_to_predicate_methods
-    iprop = init_property_with({specs: 1|2|4|8})
-    iprop_no = init_property_with({specs: 0})
+    iprop     = init_property_with({specs: 1|2|4|8})
+    iprop_no  = init_property_with({specs: 0})
+    inst      = MaClasseLambda.new
 
-    assert_predicate iprop, :required?, 'Property should be required'
-    refute_predicate iprop_no, :required?, 'Property shouldn’t be required'
+    assert iprop.required?(inst), 'Property should be required'
+    assert iprop_no.required?(inst), 'Property shouldn’t be required'
 
-    assert iprop.displayable?, "Property should be displayable"
-    refute iprop_no.displayable?, "Property shouldn't be displayable"
+    assert iprop.displayable?(inst), "Property should be displayable"
+    refute iprop_no.displayable?(inst), "Property shouldn't be displayable"
 
-    assert iprop.editable?, "Property should be editable"
-    refute iprop_no.editable?, "Property shouldn't be editable"
+    assert iprop.editable?(inst), "Property should be editable"
+    refute iprop_no.editable?(inst), "Property shouldn't be editable"
 
-    assert iprop.removable?, "Property should be removable"
-    refute iprop_no.removable?, "Property shouldn't be removable"
+    assert iprop.removable?(inst), "Property should be removable"
+    refute iprop_no.removable?(inst), "Property shouldn't be removable"
 
   end
 

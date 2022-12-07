@@ -29,7 +29,7 @@ class Validator
     #
     # Une propriété requise doit exister
     # 
-    if property.required? && (!new_value || new_value.to_s.empty?)
+    if property.required?(instance) && (!new_value || new_value.to_s.empty?)
       return ERRORS[:required_property] % property.name
     end
 
