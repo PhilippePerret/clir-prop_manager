@@ -186,20 +186,6 @@ class Property
       curval
     end
   end
-  # def formated_value_in(instance)
-  #   return '---' if instance.send(prop).nil?
-  #   if format_method # :mformat dans la définition de la propriété
-  #     if format_method.is_a?(Proc)
-  #       format_method.call(current_value(instance), instance)
-  #     else
-  #       instance.send(format_method)
-  #     end
-  #   elsif instance.respond_to?("f_#{prop}".to_sym)
-  #     instance.send("f_#{prop}".to_sym)
-  #   else
-  #     instance.send(prop)
-  #   end
-  # end
 
   # --- Functional Methods ---
 
@@ -318,9 +304,12 @@ class Property
   def if_able?(instance)
     return true if if_attr.nil?
     case if_attr
-    when Symbol then instance.send(if_attr)
-    when Proc   then if_attr.call(instance)
-    when TrueClass, FalseClass then if_attr
+    when Symbol
+      instance.send(if_attr)
+    when Proc
+      if_attr.call(instance)
+    when TrueClass, FalseClass
+      if_attr
     else
       raise ERRORS[:unknown_if_attribut] % "#{if_attr.inspect}:#{if_attr.class}"
     end

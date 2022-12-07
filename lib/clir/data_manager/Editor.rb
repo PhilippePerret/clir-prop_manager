@@ -41,7 +41,7 @@ class Editor
       # L'user peut choisir la propriété à définir ou le choix
       # "Enregistrer" pour enregistrer l'instance
       # 
-      case prop = Q.select((options[:question]||MSG[:define]).jaune, choices, { per_page:choices.count, default: index_default, filter:true} )
+      case prop = Q.select((options[:question]||(MSG[:define_thing] % instance.class.class_name)).jaune, choices, { per_page:choices.count, default: (index_default unless choices.empty?), filter:true} )
       when NilClass 
         break
       when :save
@@ -105,10 +105,30 @@ class Editor
     # Ajout de la gouttière entre label et valeur
     max_label_width += 4
 
+    #
+    # Le menu qui devra être sélectionné
+    # 
     index_default = nil
-    # cs = labelize(cs).split("\n")
+    #
+    # Index courant réel
+    #
+    # Avant qu'il existe des propriétés conditionnelles (:if) on
+    # pouvait prendre l'index de la propriété pour savoir quel menu
+    # sélectionner. Maintenant, on doit utiliser cette variable
+    # +real_current_index+ pour connaitre l'index réel du menu  à
+    # sélectionner ensuite.
+    # 
+    # On commence à 1 pour avoir le premier choix à 2 car le 
+    # premier item est toujours l'item "Enregistrer"
+    # 
+    real_current_index = 1
+
+    # 
+    # Boucle pour récupérer toutes les menus à afficher
+    # 
     cs = manager.properties.map do |property|
       next if not(property.editable?(instance))
+      real_current_index += 1 if index_default.nil?
       curval = instance.send(property.prop)
       isdef  = curval != nil
       #
@@ -116,7 +136,7 @@ class Editor
       # quement sur le premier champ (property) qui n'est pas définie
       # 
       if index_default.nil? && instance.new? && not(isdef)
-        index_default = property.index + 1
+        index_default = real_current_index
       end
       # 
       # Si c'est une propriété requise et qu'elle n'est pas définie,
@@ -126,7 +146,7 @@ class Editor
       # 
       if property.required?(instance) && not(isdef)
         requirement_missing = true
-        index_default = property.index + 1 if index_default.nil?
+        index_default = real_current_index if index_default.nil?
       end
       # choix = cs.shift
       # choix = "#{property.name.ljust(max_label_width)}#{curval}"

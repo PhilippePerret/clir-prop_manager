@@ -259,6 +259,7 @@ class Manager
   # @return le string à utiliser pour l'attribut :name de TTY prompt
   def tty_name_for(item, options)
     @tty_name_procedure ||= begin
+      options ||= {}
       if options.key?(:name4tty) && options[:name4tty]
         #
         # Procédure à utiliser définie dans les options
@@ -374,6 +375,9 @@ class Manager
     end
     classe.define_singleton_method 'get' do |item_id|
       data_manager.get(item_id)
+    end
+    classe.define_singleton_method 'class_name' do
+      my.class_name
     end
     if classe.methods.include?(:choose)
       # Rien à faire
@@ -557,18 +561,19 @@ class Manager
       key = classe.feminine? ? :item_created_fem : :item_created
       puts (MSG[key] % {element:  class_name}).vert
     end
-    return self # chainage
+    return instance # chainage
   end
 
   def edit(instance, options = nil)
     @editor ||= Editor.new(self)
     @editor.edit(instance, options)
-    return self # chainage
+    return instance # chainage
   end
 
   def display(instance, options = nil)
     @displayer ||= Displayer.new(self)
     @displayer.show(instance, options)
+    return instance # chainage
   end
 
   def remove(instance, options = nil)
