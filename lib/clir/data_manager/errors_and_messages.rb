@@ -21,6 +21,10 @@ module DataManager
       invalid_mail: "Le mail '%s' est invalide.",
       invalid_date: "La date '%s' est invalide (format requis : JJ/MM/AAAA)",
       invalid_url: "L'URL '%s' est invalide : %s.",
+      invalid_people: "La donnée %s est invalide : %s…",
+      too_long_name:  "Le nom '%s' contient trop de mots pour être un nom",
+      bad_chars_in_name: "Le nom '%s' contient des caractères impossibles dans un nom",
+
     },
     'us' => {
       undefined_class: 'Class %s is undefined…',
@@ -41,6 +45,9 @@ module DataManager
       invalid_mail: "Invalid email address '%s'.",
       invalid_date: "Invalid date '%s' (format: MM/DD/YYYY)",
       invalid_url: "Invalid URL '%s'. Reason: %s.",
+      invalid_people: "Invalid data: %s (%s)…",
+      too_long_name:  "The name '%s' contains too much word to be a real name",
+      bad_chars_in_name: "The name '%s' contains unexpected characters",
     }
 
   }

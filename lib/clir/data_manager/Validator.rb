@@ -33,28 +33,55 @@ class Validator
       return ERRORS[:required_property] % property.name
     end
 
-    # 
-    # Un email
-    # 
-    if property.type == :email && new_value && not(mail_valid?(new_value))
-      return ERRORS[:invalid_mail] % new_value
-    end
+    if new_value
+      case property.type
 
-    #
-    # Une date
-    # 
-    if property.type == :date && new_value && not(date_valid?(new_value))
-      return ERRORS[:invalid_date] % new_value
-    end
+      when :email
+        # 
+        # Un email
+        # 
+        if not(mail_valid?(new_value))
+          return ERRORS[:invalid_mail] % new_value
+        end
+      when :date
+        #
+        # Une date
+        # 
+        if not(date_valid?(new_value))
+          return ERRORS[:invalid_date] % new_value
+        end
+      when :url
+        #
+        # Une URL
+        #
+        if (err = url_invalid?(new_value))
+          return ERRORS[:invalid_url] % [new_value, err]
+        end
+      when :people
+        #
+        # Un ou des people
+        # 
+        if (err = people_invalid?(new_value))
+          return ERRORS[:invalid_people] % [property.name, err]
+        end
+      end
 
-    #
-    # Une URL
-    #
-    if property.type == :url && new_value && (error_url = url_invalid?(new_value))
-      return ERRORS[:invalid_url] % [new_value, error_url]
-    end
+    end #/si la nouvelle valeur est défini
 
     return nil # OK
+  end
+
+  # @return true si la donnée +people+ est une donnée de personne
+  # valide. Une donnée de personne valide correspond à 
+  def people_invalid?(people)
+    people.split(',').each do |patro|
+      dpatro = patro.split(' ')
+      dpatro.count < 6 || raise(ERRORS[:too_long_name] % patro)
+      patro.match?(/[0-9?!_,;.…\/\\"]/) && raise(ERRORS[:bad_chars_in_name] % patro)
+    end
+    return nil # ok
+  rescue Exception => e
+    return e.message
   end
 
   # @return true si le mail +mail+ est valide

@@ -286,6 +286,8 @@ Nom humain de la propriété, qui sera utilisé en label pour afficher les donn�
 :id 				ID d’une instance connue
 :ids 				Liste d’IDs d’instance connues
 :prix 			Un prix (nombre flottant)
+:people 		Une ou des personnes
+:url 				Une URL existante
 ~~~
 
 ---
@@ -302,7 +304,27 @@ Spécificité de la propriété, permet de savoir si elle est requise (`REQUIRED
 
 ### Attribut `:default`
 
-Valeur par défaut.
+Valeur par défaut. Elle peut être définie par : 
+
+* une valeur explicite (d’un type correspondant au type de la propriété),
+
+* une procédure de calcul qui reçoit en premier argument l’instance courante,
+
+  ~~~ruby
+  {prop: first_job_year, ... , default: Proc.new { |inst| inst.naissance + 18 }
+  ~~~
+
+  Noter que cette procédure peut retourner un `Symbol` qui pourra alors être considéré (ou pas) comme méthode de l’instance ou de la classe.
+
+* un `Symbol` renvoyant à une méthode de l’instance OU une méthode de la classe de l’instance :
+
+  ~~~ruby
+  {prop: first_job_year, ... , default: :year_majorite}
+  # En considérant que :year_majorite est une méthode d'instance de la 
+  # classe, qui retourne l'année de majorité de l'individu
+  ~~~
+
+  
 
 ---
 
