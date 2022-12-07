@@ -514,7 +514,6 @@ class Manager
   end
 
   def traite_property_as_other_class_instance(dproperty)
-    my = self
     prop        = dproperty[:prop]
     last        = prop.end_with?('_ids') ? -5 : -4
     class_min   = prop[0..last]

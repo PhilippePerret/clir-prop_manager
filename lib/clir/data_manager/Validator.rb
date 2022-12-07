@@ -109,7 +109,6 @@ class Validator
   # retourne rien si tout est OK
   # 
   def url_invalid?(url)
-    request = nil
     require 'net/http'
     uri = URI(url)
     Net::HTTP.get(uri)

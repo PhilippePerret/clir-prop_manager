@@ -60,12 +60,12 @@ class Property
           end
         when :date
           defvalue ||= Time.now.strftime(MSG[:date_format])
-          new_date = Q.ask(question, {default: defvalue})&.strip
-        when :string, :email, :date, :prix, :url, :people
-          # FIXED: Noter que pour le moment, on ne peut pas mettre
-          # à nil (vide) quand une valeur est déjà définie.
-          nval = Q.ask(question, {default: defvalue})&.strip
+          Q.ask(question, {default: defvalue})&.strip
+        when :string, :email, :prix, :url, :people
+          nval = Q.ask(question, {help:"'---' = nul", default: defvalue})
+          nval = nil if nval == '---'
           unless nval.nil?
+            nval = nval.strip
             case type
             when :prix
               nval = nval.to_f
