@@ -339,8 +339,10 @@ class Manager
       ss = nil # le string courant en tan que classe en recherche
       while dclass.count > 0
         x = dclass.shift
+        # puts "Étude de dclass.shift = #{x.inspect}"
         if cc.const_defined?(x)
           cc = cc.const_get(x) # => class
+          x = nil
         elsif ss.nil?
           ss = x
         elsif ss != nil
@@ -354,6 +356,11 @@ class Manager
         end
       end
       cc = nil if cc == Object
+      if cc.nil?
+        raise ERRORS[:unable_to_get_class_from_class_min] % [class_min, "."]
+      elsif not(x.nil?) || not(ss.nil?)
+        raise ERRORS[:unable_to_get_class_from_class_min] % [class_min, " : #{MSG[:not_treated] % "#{x}#{ss}".inspect}."]
+      end
       cc
     end
   end
@@ -518,6 +525,9 @@ class Manager
     last        = prop.end_with?('_ids') ? -5 : -4
     class_min   = prop[0..last]
     other_class = get_classe_from(class_min)
+    # other_class.respond_to?(:choose) || begin
+    #   raise "Impossible d'obtenir la classe relative #{class_min.inspect}. La classe calculée est #{other_class.name} qui ne répond pas à la méthode de classe :choose."
+    # end
     # puts "other_classe avec #{class_min.inspect} : #{other_class}"
     # sleep 4
     dproperty.merge!(relative_class: other_class)

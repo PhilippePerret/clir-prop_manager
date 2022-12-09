@@ -43,8 +43,8 @@ class Property
         when :id
           # [N0001]
           # Cas spécial d'une propriété <>_id. Si tout a bien été
-          # défini, DataManager a mis dans l'attribut other_class la
-          # classe de l'élément.
+          # défini, DataManager a mis dans l'attribut relative_class
+          # la classe de l'élément.
           if relative_class
             item = relative_class.choose({create: true, filter: values_filter})
             item&.id
@@ -61,12 +61,18 @@ class Property
         when :date
           defvalue ||= Time.now.strftime(MSG[:date_format])
           Q.ask(question, {default: defvalue})&.strip
-        when :string, :email, :prix, :url, :people
+        when :string, :email, :prix, :url, :people, :number
           nval = Q.ask(question, {help:"'---' = nul", default: defvalue})
           nval = nil if nval == '---'
           unless nval.nil?
             nval = nval.strip
             case type
+            when :number
+              if nval.sub(/,/,'.').match?('.')
+                nval = nval.to_f
+              else
+                nval = nval.to_i
+              end
             when :prix
               nval = nval.to_f
             when :url

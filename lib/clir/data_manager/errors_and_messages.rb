@@ -16,6 +16,7 @@ module DataManager
       require_relative_class: 'Pour la propriété "%s", la classe relative doit absolument existée, correspondant au nom de la propriété sans _id(s).',
       choice_unfound_in_choices_list: "Impossible de trouver la valeur (:value) '%s' dans la liste des valeurs de la propriété %s…",
       unknown_if_attribut: "Je ne sais pas traiter la valeur %s pour l'attribut :if…",
+      unable_to_get_class_from_class_min: "Impossible de tirer la classe relative de '%s'%s",
 
       required_property: "La propriété %s est absolument requise.",
       invalid_mail: "Le mail '%s' est invalide.",
@@ -40,6 +41,7 @@ module DataManager
       require_relative_class: 'For property "%s", a relative class should be defined, corresponding to property name.',
       choice_unfound_in_choices_list: "Unfound value (:value) '%s' in values of %s property…",
       unknown_if_attribut: "Can't treat %s value for :if attribute…",
+      unable_to_get_class_from_class_min: "Unable to get relative class from '%s'%s",
     
       required_property: "Property %s is required.",
       invalid_mail: "Invalid email address '%s'.",
@@ -61,6 +63,7 @@ module DataManager
       define:         'Définir',
       define_thing:   'Définir %s',
       no:             'Non',
+      not_treated:    '%s non traité',
       save:           'Enregistrer',
       yes:            'Oui',
       still_required_values: "valeurs requises à définir",
@@ -79,6 +82,7 @@ module DataManager
       define:         'Define',
       define_thing:   'Définir %s',
       no:             'No',
+      not_treated:    '%s not traited',
       save:           'Save',
       yes:            'Yes',
       still_required_values: "still required values",
