@@ -65,10 +65,10 @@ class Property
           nval = Q.ask(question, {help:"'---' = nul", default: defvalue})
           nval = nil if nval == '---'
           unless nval.nil?
-            nval = nval.strip
+            nval = nval.force_encoding('UTF-8').strip
             case type
             when :number
-              if nval.sub(/,/,'.').match?('.')
+              if nval.sub(/,/,'.').match?(/\./)
                 nval = nval.to_f
               else
                 nval = nval.to_i

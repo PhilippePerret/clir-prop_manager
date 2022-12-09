@@ -95,6 +95,21 @@ inst.new?
 
 ---
 
+## Méthodes `after_` et `before_`
+
+On peut programmer pour l’instance des méthodes à appeler avant (`before_`) ou après (`after_`) les opérations ci-dessus. On trouve donc :
+
+* **`before_create`** sera appelée avant la création si elle existe. Elle peut retourner les données à prendre en compte,
+* **`after_create`** sera appelée (sans argument) après la création complète de l’instance,
+* **`before_edit`** sera appelée (sans argument) avant l’édition si elle existe (noter que la création appelle aussi cette méthode),
+* **`after_edit`** sera appelée (sans argument) après l’édition et l’enregistrement de l’instance,
+* **`before_display`** sera appelée avec les options en premier argument (optionnellement) avant l’affichage. Elle retournera optionnellement les options modifiées,
+* **`after_display`** sera appelée (sans argument) après que l’instance a été affichée (donc, quand elle est affichée,
+* **`before_remove`** sera appelée (sans argument) avant la destruction de l’instance,
+* **`after_remove`** sera appelée (sans argument) après la destruction de l’instance (“instance”, ici, signifie ses données enregistrées, car l’instance en tant qu’objet informatique abstrait existe toujours)
+
+---
+
 <a name="data-properties"></a>
 
 ## Données des propriétés d’instance (`DATA_PROPERTIES`)

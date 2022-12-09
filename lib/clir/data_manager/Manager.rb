@@ -564,29 +564,37 @@ class Manager
 
   # To create a instance
   def create(instance, options = nil)
-    instance.data = {id: __new_id, is_new: true}
+    data = instance.before_create if instance.respond_to?(:before_create)
+    instance.data = data || {id: __new_id, is_new: true}
     edit(instance, options)
-    if not(instance.new?)
+    if not(instance.new?) # => bien créé
       key = classe.feminine? ? :item_created_fem : :item_created
       puts (MSG[key] % {element:  class_name}).vert
+      instance.after_create if instance.respond_to?(:after_create)
     end
     return instance # chainage
   end
 
   def edit(instance, options = nil)
     @editor ||= Editor.new(self)
+    instance.before_edit if instance.respond_to?(:before_edit)
     @editor.edit(instance, options)
+    instance.after_edit if instance_respond_to?(:after_edit)
     return instance # chainage
   end
 
   def display(instance, options = nil)
     @displayer ||= Displayer.new(self)
+    options = instance.before_display(options) if instance.respond_to?(:before_display)
     @displayer.show(instance, options)
+    instance.after_display if instance.respond_to?(:after_display)
     return instance # chainage
   end
 
   def remove(instance, options = nil)
+    instance.before_remove if instance.respond_to?(:before_remove)
     puts "Je dois apprendre à détruire l'instance #{instance.inspect}.".jaune
+    instance.after_remove if instance.respond_to?(:after_remove)
   end
 
   # Loop on every property (as instances)
