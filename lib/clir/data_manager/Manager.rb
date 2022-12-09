@@ -47,6 +47,10 @@ class Manager
       classe::DATA_PROPERTIES
     end
     @classe = classe
+    #
+    # Pour que rubocop ne râle pas…
+    # 
+    @table  = nil
     # 
     # Méthodes d'instance
     # 
@@ -172,6 +176,18 @@ class Manager
       choose_precedence_set(choix.id)
       choix
     end
+  end
+
+  # Pour afficher des items de la classe fille
+  # 
+  # @param options [Hash|Nil]  Options
+  # @param @options :filter Filtre pour n'afficher que les items
+  #     correspondant à :filter. :filter est une table de clés qui
+  #     correspondent aux propriétés de l'item et de valeurs qui sont
+  #     les valeurs attendues.
+  # 
+  def display_items(options)
+    puts "Je dois apprendre à afficher les items.".jaune
   end
 
   ##
@@ -370,7 +386,9 @@ class Manager
     @class_name ||= classe.name.to_s.split('::').last
   end
 
+
   # --- Implementation Managed Class Methods ---
+
 
   def prepare_class_methods
     my = self
@@ -385,6 +403,9 @@ class Manager
     end
     classe.define_singleton_method 'class_name' do
       my.class_name
+    end
+    classe.define_singleton_method 'display' do |options = nil|
+      my.display_items(options)
     end
     if classe.methods.include?(:choose)
       # Rien à faire
@@ -658,7 +679,7 @@ class Manager
     Dir["#{save_location}/*.#{save_format}"].map do |pth|
       case save_format
       when :yaml
-        YAML.load_file(pth, {aliases:true, symbolize_names: true})
+        YAML.load_file(pth, **{aliases:true, symbolize_names: true})
       else
         raise "Format de fiche inconnue : #{save_format}"
       end
