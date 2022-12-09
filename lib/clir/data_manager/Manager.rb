@@ -579,7 +579,7 @@ class Manager
     @editor ||= Editor.new(self)
     instance.before_edit if instance.respond_to?(:before_edit)
     @editor.edit(instance, options)
-    instance.after_edit if instance_respond_to?(:after_edit)
+    instance.after_edit if instance.respond_to?(:after_edit)
     return instance # chainage
   end
 
