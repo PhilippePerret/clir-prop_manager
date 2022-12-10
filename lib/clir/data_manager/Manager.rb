@@ -178,7 +178,8 @@ class Manager
     end
   end
 
-  # Pour afficher des items de la classe fille
+  # Pour afficher des items les uns sur les autres, avec des
+  # informations réduites.
   # 
   # @param options [Hash|Nil]  Options
   # @param @options :filter Filtre pour n'afficher que les items
@@ -186,8 +187,53 @@ class Manager
   #     correspondent aux propriétés de l'item et de valeurs qui sont
   #     les valeurs attendues.
   # 
-  def display_items(options)
-    puts "Je dois apprendre à afficher les items.".jaune
+  def display_items(options = nil)
+    full_loaded? || load_data
+    @items.count > 0 || begin
+      puts MSG[:no_items_to_display].orange
+      return
+    end
+    options ||= {}
+    # 
+    # Filtrage de la liste
+    # 
+    if options[:filter]
+      disp_items = []
+      @items.each do |item|
+        disp_items << item if item_match_filter?(item, filter)
+      end
+    else
+      disp_items = @items
+    end
+
+    #
+    # Procédure qui permet de récupérer la liste des données pour
+    # l'affichage tabulaire des éléments
+    # 
+    header = []
+    tableizable_props = []
+    properties.each do |property|
+      if property.tablizable?
+        header << (property.short_name||property.name)
+        tableizable_props << property
+      end
+    end
+
+    tbl = Clir::Table.new(**{
+      title:    "Affichage #{class_name}s",
+      header:   header
+    })
+    @items.each do |item|
+      tbl <<  tableizable_props.map do |property|
+        property.formated_value_in(item) || '---'
+      end
+    end
+
+    clear unless debug?
+    puts "\n\n+++ TABLE:\n#{tbl.inspect}"
+    # exit
+    tbl.display
+
   end
 
   ##

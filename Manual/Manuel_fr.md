@@ -146,6 +146,7 @@ Comme nous venons de le voir, chaque ligne (chaque item) de [`DATA_PROPERTIES`](
 
 * [**`:prop`**](#attribut-prop)
 * [**`:name`**](#attribut-name)
+* [**`:short_name`**](#attribut-short-name)
 * [**`:type`**](#attribut-type)
 * [**`:specs`**](#attribut-specs)
 * [**`:default`**](#attribut-default)
@@ -286,6 +287,14 @@ Nom humain de la propriété, qui sera utilisé en label pour afficher les donn�
 
 ---
 
+<a name="attribut-short-name"></a>
+
+### Attribut `:short_name`
+
+Nom humain court de la propriété, spécialement désigné pour être utilisé dans l’affichage par table.
+
+---
+
 <a name="attribut-type"></a>
 
 ### Attribut `:type`
@@ -312,6 +321,23 @@ Nom humain de la propriété, qui sera utilisé en label pour afficher les donn�
 ### Attribut `:specs`
 
 Spécificité de la propriété, permet de savoir si elle est requise (`REQUIRED`), éditable (`EDITABLE`), affichable (`DISPLAYABLE`), supprimable (`REMOVABLE`) ou toutes ces propriétés en même temps (`ALL`).
+
+~~~bash
+REQUIRED 			# La propriété doit impérativement être définie
+EDITABLE    	# La propriété peut être éditée. L'ID par exemple,
+							# ne peut pas l'être. Il est défini programmatiquement
+							# et ne peut être modifié
+DISPLAYABLE		# La propriété est affichée dans l'affichage complet de
+							# la donnée
+TABLEIZABLE   # La propriété est affichée dans l'affichage de la donnée
+							# dans une table (Clir::Table). Dans ce cas, il peut être
+							# intéressant de définir :short_name pour le libellé de
+							# l'entête.
+REMOVABLE 		# La propriété peut être détruite (remplacée par nil)
+ALL 					# Toutes les précédentes
+~~~
+
+
 
 ---
 

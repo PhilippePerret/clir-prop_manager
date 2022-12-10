@@ -174,17 +174,18 @@ class Property
       else
         raise "Je ne connais pas la classe relative"
       end
-    elsif type == :select && values
+    elsif type == :select && data[:values]
       #
       # Propriété avec des values (on renvoie :full_name ou :name
       # du choix correspondant)
       # 
-      values.each do |dchoix|
+      values_for_instance = values(instance)
+      values_for_instance.each do |dchoix|
         if dchoix[:value] == curval
           return dchoix[:full_name]||dchoix[:name]
         end
       end
-      raise ERRORS[:choice_unfound_in_choices_list] % [curval, self.name]
+      raise ERRORS[:choice_unfound_in_choices_list] % [curval.inspect, self.name, values_for_instance.inspect]
     else
       # 
       # En dernier recours, la valeur telle quelle
@@ -304,6 +305,18 @@ class Property
     :TRUE == @isremovable ||= true_or_false(specs & REMOVABLE > 0)
   end
 
+  # @return [true, false] true si la propriété doit être affichée 
+  # dans une table Clir::Table
+  # @note
+  #   Contrairement aux autres méthodes predicate de même type (cf
+  #   ci-dessus), on ne teste pas le if_able car cette valeur doit
+  #   être utilisée dans la table même pour les items qui ne la défi-
+  #   nissent pas (sinon il y aurait des "trous" dans la table)
+  # 
+  def tablizable?
+    :TRUE == @isremovable ||= true_or_false(specs & TABLEIZABLE > 0)    
+  end
+
   # @return TRUE si la propriété :if n'est pas définie ou si elle
   # retourne la valeur true (donc elle retourne true quand la 
   # propriété existe pour l'instance donnée)
@@ -323,16 +336,17 @@ class Property
 
   # --- Hard Coded Properties ---
 
-  def index;    @index    ||= data[:index]    end
-  def name;     @name     ||= data[:name]     end
-  def specs;    @specs    ||= data[:specs]    end
-  def prop;     @prop     ||= data[:prop]     end
-  def type;     @type     ||= data[:type]     end
-  def quest;    @quest    ||= data[:quest]    end
-  def if_attr;  @ifattr   ||= data[:if]       end
+  def index;      @index        ||= data[:index]      end
+  def name;       @name         ||= data[:name]       end
+  def specs;      @specs        ||= data[:specs]      end
+  def prop;       @prop         ||= data[:prop]       end
+  def type;       @type         ||= data[:type]       end
+  def quest;      @quest        ||= data[:quest]      end
+  def if_attr;    @ifattr       ||= data[:if]         end
+  def short_name; @short_name   ||= data[:short_name] end
   def values(instance = nil)
-    @values ||= begin # note : elle sera transformée en liste avec
-                      # précédences à la première utilisation.
+    # @values ||= begin # note : elle sera transformée en liste avec
+    #                   # précédences à la première utilisation.
       vs = data[:values]
       if vs.is_a?(Symbol)
         if manager.classe.respond_to?(vs)
@@ -343,11 +357,12 @@ class Property
           raise "Personne ne semble comprendre la méthode #{vs.inspect}"
         end
       elsif vs.is_a?(Proc)
+        puts "Instance dans values comme proc : #{instance.inspect}"
         vs.call(instance)
       else
         vs
       end
-    end
+    # end
   end
   def default(instance)
     d = data[:default]

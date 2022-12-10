@@ -14,7 +14,7 @@ module DataManager
       bas_save_format: '%s@@save_format doit être :csv ou :yaml exclusivement.',
       no_csv_format_with_card: 'L’enregistrement par fiche (:card) ne permet pas le format :csv.',
       require_relative_class: 'Pour la propriété "%s", la classe relative doit absolument existée, correspondant au nom de la propriété sans _id(s).',
-      choice_unfound_in_choices_list: "Impossible de trouver la valeur (:value) '%s' dans la liste des valeurs de la propriété %s…",
+      choice_unfound_in_choices_list: "Impossible de trouver la valeur (:value) '%s' dans la liste des valeurs de la propriété %s (%s)…",
       unknown_if_attribut: "Je ne sais pas traiter la valeur %s pour l'attribut :if…",
       unable_to_get_class_from_class_min: "Impossible de tirer la classe relative de '%s'%s",
 
@@ -39,7 +39,7 @@ module DataManager
       bas_save_format: '%s@@save_format should be exclusively :csv or :yaml.',
       no_csv_format_with_card: 'Save system by card (:card) does not allow :csv format.',
       require_relative_class: 'For property "%s", a relative class should be defined, corresponding to property name.',
-      choice_unfound_in_choices_list: "Unfound value (:value) '%s' in values of %s property…",
+      choice_unfound_in_choices_list: "Unfound value (:value) '%s' in values of %s property… (%s)",
       unknown_if_attribut: "Can't treat %s value for :if attribute…",
       unable_to_get_class_from_class_min: "Unable to get relative class from '%s'%s",
     
@@ -72,6 +72,7 @@ module DataManager
       data_not_saved_cancel: "Les données n'ont pas été sauvegardées. Voulez-vous vraiment renoncer et les perdre ?",
       item_created: "Nouveau %{element} créé avec succès !",
       item_created_fem: "Nouvelle %{element} créée avec succès !",
+      no_items_to_display: "Aucun élément à afficher.", 
 
     },
     'us' => {
@@ -91,6 +92,7 @@ module DataManager
       data_not_saved_cancel: "Data not saved. Do you really want to cancel?",
       item_created: "New %{element} created with success!",
       item_created_fem: "New %{element} created with success!",
+      no_items_to_display: "No item to display.", 
     }
   }
 
