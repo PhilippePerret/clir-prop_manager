@@ -630,7 +630,8 @@ class Manager
   # To create a instance
   def create(instance, options = nil)
     data = instance.before_create if instance.respond_to?(:before_create)
-    instance.data = data || {id: __new_id, is_new: true}
+    instance.data = data || {id: __new_id}
+    instance.data.merge!(is_new: true)
     edit(instance, options)
     if not(instance.new?) # => bien créé
       key = classe.feminine? ? :item_created_fem : :item_created
@@ -642,9 +643,14 @@ class Manager
 
   def edit(instance, options = nil)
     @editor ||= Editor.new(self)
+    is_new_item = instance.data[:is_new]
     instance.before_edit if instance.respond_to?(:before_edit)
     @editor.edit(instance, options)
     instance.after_edit if instance.respond_to?(:after_edit)
+    unless is_new_item
+      key = classe.feminine? ? :item_updated_fem : :item_updated
+      puts (MSG[key] % [class_name, instance.id]).vert
+    end
     return instance # chainage
   end
 

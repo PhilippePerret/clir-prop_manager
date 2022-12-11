@@ -72,6 +72,8 @@ module DataManager
       data_not_saved_cancel: "Les données n'ont pas été sauvegardées. Voulez-vous vraiment renoncer et les perdre ?",
       item_created: "Nouveau %{element} créé avec succès !",
       item_created_fem: "Nouvelle %{element} créée avec succès !",
+      item_updated: "%s #%s actualisé.",
+      item_updated_fem: "%s #%s actualisée.",
       no_items_to_display: "Aucun élément à afficher.", 
 
     },
@@ -92,6 +94,8 @@ module DataManager
       data_not_saved_cancel: "Data not saved. Do you really want to cancel?",
       item_created: "New %{element} created with success!",
       item_created_fem: "New %{element} created with success!",
+      item_updated: "%s #%s updated.",
+      item_updated_fem: "%s #%s updated.",
       no_items_to_display: "No item to display.", 
     }
   }
