@@ -85,13 +85,13 @@ class PrecedencedList < Array
     @path ||= File.join(self.class.folder, "#{@list_name}.precedences")
   end
 
+  # @note
+  #   En mode test, il faut le refaire chaque fois
   def self.folder
-    @@folder ||= begin
-      if test?
-        mkdir(File.join(Dir.home, 'TESTS', '.precedences'))
-      else
-        mkdir(File.join(Dir.home, '.precedences'))
-      end
+    if test?
+      mkdir(File.join(Dir.home, 'TESTS', '.precedences'))
+    else
+      @@folder ||= mkdir(File.join(Dir.home, '.precedences'))
     end
   end
 end #/class PrecedencedList

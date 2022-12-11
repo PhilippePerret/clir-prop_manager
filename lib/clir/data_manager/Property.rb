@@ -86,7 +86,7 @@ class Property
           # 
           choices = select_values_with_precedences(instance)
           value = Q.select(question, choices, {default:default_select_value(instance, choices), per_page:choices.count})
-          values.set_last(value)
+          values(instance).set_last(value)
           value
         when :bool
           Q.select(question, BOOLEAN_VALUES, {default: boolean_default_value(instance), per_page:BOOLEAN_VALUES.count})
@@ -250,10 +250,7 @@ class Property
   end
 
   def select_values_with_precedences(instance)
-    uniq_name = "#{instance.class.name.to_s.gsub(/::/,'-')}-#{prop}".downcase
-    vs = values(instance)
-    @values = PrecedencedList.new(vs, uniq_name) unless vs.instance_of?(PrecedencedList)
-    return values.to_prec
+    return values(instance).to_prec
   end
 
   # @return l'index de la valeur actuelle de l'instance pour la 
@@ -344,26 +341,28 @@ class Property
   def quest;      @quest        ||= data[:quest]      end
   def if_attr;    @ifattr       ||= data[:if]         end
   def short_name; @short_name   ||= data[:short_name] end
+
+
   def values(instance = nil)
-    # @values ||= begin # note : elle sera transformée en liste avec
-    #                   # précédences à la première utilisation.
-      vs = data[:values]
-      if vs.is_a?(Symbol)
-        if manager.classe.respond_to?(vs)
-          manager.classe.send(vs)
-        elsif manager.respond_to?(vs)
-          manager.send(vs)
-        else
-          raise "Personne ne semble comprendre la méthode #{vs.inspect}"
-        end
-      elsif vs.is_a?(Proc)
-        puts "Instance dans values comme proc : #{instance.inspect}"
-        vs.call(instance)
+    vs = 
+    vs = case (vs = data[:values])
+    when Symbol
+      if manager.classe.respond_to?(vs)
+        manager.classe.send(vs)
+      elsif manager.respond_to?(vs)
+        manager.send(vs)
       else
-        vs
+        raise "Personne ne semble comprendre la méthode #{vs.inspect}"
       end
-    # end
+    when Proc
+      vs.call(instance)
+    else
+      vs
+    end
+    uniq_name = "#{manager.classe.class.to_s.gsub(/::/,'-')}-#{prop}".downcase
+    return PrecedencedList.new(vs, uniq_name)
   end
+
   def default(instance)
     d = data[:default]
     d = d.call(instance) if d.is_a?(Proc)

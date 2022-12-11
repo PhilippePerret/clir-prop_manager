@@ -220,7 +220,7 @@ class Manager
     end
 
     tbl = Clir::Table.new(**{
-      title:    "Affichage #{class_name}s",
+      title:    "AFFICHAGE DES #{class_name}S",
       header:   header
     })
     @items.each do |item|
@@ -230,8 +230,6 @@ class Manager
     end
 
     clear unless debug?
-    puts "\n\n+++ TABLE:\n#{tbl.inspect}"
-    # exit
     tbl.display
 
   end
