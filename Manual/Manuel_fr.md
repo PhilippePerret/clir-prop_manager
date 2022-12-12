@@ -645,7 +645,9 @@ MaClasseManaged.save_location
 # => /path/to/folder/de/sauvegarde/
 ~~~
 
-### Choisir un item
+---
+
+## Choisir un item
 
 Parmi les méthodes les plus pratiques du manage de données, il y a la méthode `choose` (implémentée dans la classe) qui permet de choisir un élément parmi tous ceux existant, avec ou non un filtre :
 
@@ -654,6 +656,41 @@ MaClasseManaged.choose(options = nil)
 # => retourne l'instance choisie
 ~~~
 
+### Groupement des items (`@@group_by`)
+
+Lorsqu'il y a beaucoup d’items, il peut être plus clair de les grouper pour voir les choisir plus facilement. Ou par exemple, ce peut être simplement une histoire de cohérence sémantique. Par exemple, si l’on veut choisir un livre, on peut vouloir dans un premier temps le choisir simplement par le titre, sans avoir pour chaque livre les versions de support (papier, numérique, …) ou les langues.
+
+Pour ce faire, on définit la variable générale **`@@group_by`** qui déterminera que la classe sera toujours groupée par cette donnée. Elle peut se définir au même niveau que les variables `@@save_location` etc. Sa valeur est une clés définie dans `DATA_PROPERTIES`.
+
+~~~ruby
+  @@group_by = :<props>
+~~~
+
+Par exemple : 
+
+~~~ruby
+class MaClasseManaged
+  DATA_PROPERTIES = [
+    {prop: :id, name: "ID", ....}
+		{prop: :livre, name: "Livre", ...}
+		{prop: :name,  name: "Nom", ....}
+    {prop: :cate,  name: "Catégorie", ...}
+  ]
+  
+  @@save_location = "path/to/the/file"
+  
+  @@group_by = :cate
+
+end
+~~~
+
+Si la propriété est une propriété de type *identifiant* (par exemple `livree_id`) alors les items seront rassemblé sous l’instance correspondante et le nom de cette instance sera utilisée pour l’affichage.
+
+Si la propriété choisie est une propriété quelconque, alors c’est sa valeur qui est utilisée dans la liste affichée. Par exemple, s’il existe les catégorie (`:cate`)  “Boisson”, “Entrée” et “Fromage”, alors tous les éléments dans la catégorie “Boisson” seront rassemblés sous ce nom unique, tous les éléments de catégorie “Fromage” seront rassemblés sous ce nom, etc.
+
+---
+
+<a name="les-plus"></a>
 
 
 ## Les petits plus

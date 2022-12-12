@@ -118,17 +118,14 @@ class Manager
   # options fournies peuvent définir une autre propriété avec l'at-
   # tribut :name_property
   # 
-  # @param options {Hash}
-  #   :question   La question à poser ("Choisir" par défaut)
-  #   :multi      Si true, on peut choisir plusieurs éléments
-  #   :create     Si true, on peut créer un nouvel élément
-  #   :filter     Filtre à appliquer aux valeurs à afficher
-  #               Avec le filtre, les instances n'apparaitront pas
-  #               à l'écran, contrairement à :exclude.
-  #   :exclude    Liste d'identifiants qu'ils faut rendre "inchoisis-
-  #               sables".
-  #   :default    Quand :multi, les valeurs à sélectionner par défaut
-  #               C'est une liste d'identifiants.
+  # @param [Hash] options
+  # @option options [String]  :question   La question à poser ("Choisir" par défaut)
+  # @option options [Boolean] :multi      Si true, on peut choisir plusieurs éléments
+  # @option options [Boolean] :create     Si true, on peut créer un nouvel élément
+  # @option options [Hash]    :filter     Filtre à appliquer aux valeurs à afficher
+  #     Avec le filtre, les instances n'apparaitront pas à l'écran, contrairement à :exclude.
+  # @option options [Array]   :exclude    Liste d'identifiants qu'ils faut rendre "inchoisissables".
+  # @option options [Array]   :default    Quand :multi, les valeurs à sélectionner par défaut. C'est une liste d'identifiants.
   # 
   def choose(options = nil)
     # 
@@ -136,7 +133,7 @@ class Manager
     # 
     options ||= {}
     options.key?(:multi) || options.merge!(multi: false)
-    options[:question]   ||= "Choisir"
+    options[:question]   ||= "#{MSG[:choose]} : "
     options[:question] = options[:question].jaune
     load_data unless full_loaded?
     @tty_name_procedure = nil
@@ -164,18 +161,47 @@ class Manager
       #
       # Enregistrement de la précédence
       # 
-      choixs.each { |choix| choix && choose_precedence_set(choix.id) }
+      choixs = choixs.map do |choix|
+        next if choix.nil?
+        choose_precedence_set(choix.id)
+        if choix.instance_of?(GroupedItem)
+          choose_in_list_of_grouped_items(choix, options)
+        else
+          choix
+        end
+      end.compact
       # 
       # Instances retournées
       # 
       choixs
     else
+      # 
+      # L'utilisateur procède au choix 
+      # 
       choix = Q.select(options[:question], cs, {per_page: 20, filter:true})
       choix = classe.new.create if choix == :create
       choix || return # cancel
       choose_precedence_set(choix.id)
+      # 
+      # Si c'est une liste d'items groupés, il faut encore choisir
+      # dans cette liste l'item qui sera renvoyé. Sinon, on retourne
+      # l'item choisi.
+      # 
+      if choix.instance_of?(GroupedItem)
+        choix = choose_in_list_of_grouped_items(choix, options)
+      end
       choix
     end
+  end
+
+  # @return [Any] Any instance chosen in +group+ 
+  # @param [GroupedItems] group Instance with items grouped
+  #
+  def choose_in_list_of_grouped_items(group, options)
+    choices = group.items.map do |item|
+      {name: item.name, value: item}
+    end + [CHOIX_RENONCER]
+    Q.select(options[:question], choices, {per_page:choices.count})
   end
 
   # Pour afficher des items les uns sur les autres, avec des
@@ -272,8 +298,18 @@ class Manager
   end
 
   ##
-  # Retourne une liste avec les items classés par précédences si la
-  # liste de précédence existe.
+  # @return [Array] Liste des "choices" pour le select de Tty-prompt
+  # pour choisir une instance de la classe.
+  # Cette liste tient compte de la variable @@group_by de la classe,
+  # qui détermine les regroupements de données à effectuer.
+  # La méthode retour$ne aussi une liste avec ITEMS CLASSÉS PAR 
+  # PRÉCÉDENCES si la liste de précédence existe.
+  # Donc une liste :
+  #   - items groupés par @@group_by
+  #   - items classés par liste de précédence.
+  # @note
+  #   La liste de précédence se fiche de savoir s'il s'agit d'un
+  #   item ou d'un groupement d'items 
   # 
   def get_choices_with_precedences(options)
     list = nil
@@ -290,14 +326,17 @@ class Manager
     else
       list = @items
     end
+
     # 
     # Filtrer la liste si nécessaire
     # 
-    if options[:filter]
-      list = list.select do |item|
-        item_match_filter?(item, options[:filter])
-      end
-    end
+    list = filter_items_of_list(list, options)
+
+    #
+    # Grouper les éléments si nécessaire
+    # 
+    list = group_items_of_list(list, options)
+
     # 
     # On retourne des menus pour TTY-Prompt
     # 
@@ -309,6 +348,90 @@ class Manager
     return cs
   end
 
+  # Filtre la liste +list+ avec le filtre +options[:filter]+ s'il
+  # existe.
+  # @return [Array] La liste des éléments filtrés
+  def filter_items_of_list(list, options)
+    return list unless options[:filter]
+    list.select do |item|
+      item_match_filter?(item, options[:filter])
+    end
+  end
+
+  # Groupe les éléments dans la liste +list+ suivant la variable de
+  # classe @@group_by ou +options[:group_by]+
+  # 
+  # @return [Array] La liste Tty-prompt avec les instances groupées
+  # @note
+  #   Cf. le manuel pour le détail de l'utilisation.
+  # 
+  def group_items_of_list(list, options = nil)
+    return list unless options[:group_by] || items_grouped_by
+    # 
+    # La clé de groupement
+    # 
+    groupby = options[:group_by] || items_grouped_by
+    # 
+    # La clé de groupe fait-elle référence à une classe relative ?
+    # 
+    is_relative_class = groupby.to_s.match?(/_ids?$/)
+    #
+    # La structure qui va permettre de conserver les groupes
+    # 
+    Object.const_set('GroupedItem', Struct.new(:name, :id, :items))
+    # 
+    # Table des groupes initiés
+    # 
+    groups = {}
+    # 
+    # La liste finale qui contiendra les nouveaux éléments
+    # 
+    final_list = []
+    # 
+    # On boucle sur la liste en groupant
+    # 
+    list.each do |item|
+      if (group_id = item.send(groupby))
+        # 
+        # Si ce groupe n'existe pas, on le crée
+        # 
+        unless groups.key?(group_id)
+          # 
+          # Le nom que prendra le groupe
+          # 
+          property = table_properties[groupby]
+          nom = 
+            if is_relative_class
+              property.relative_class.get(group_id).name
+            else
+              property.name
+            end
+          group = GroupedItem.new(nom, group_id, [])
+          groups.merge!(group_id => group)
+          final_list << group
+        end
+        groups[group_id].items << item
+      else
+        # 
+        # Si l'item ne répond pas à la propriété de classement, on
+        # le met tel quel
+        # 
+        final_list << item
+      end
+    end
+    # 
+    # On retourne la liste finale
+    # 
+    return final_list
+  end
+
+  # @return [Boolean] True si l'instance +item+ correspond au filtre
+  # +filter+
+  # @param [Any] item Instance de classe quelconque (mais qui doit
+  #                   répondre à toutes les clés du filtre)
+  # @param [Hash] filter  Définition du filtre, avec en clé des 
+  #                       méthode de l'item et en valeur les valeurs
+  #                       attendues (comparées avec '!=').
   def item_match_filter?(item, filter)
     filter.each do |key, expected|
       return false if item.send(key) != expected
@@ -373,6 +496,9 @@ class Manager
   end
   def save_format
     classe.class_variable_get("@@save_format")
+  end
+  def items_grouped_by
+    classe.class_variable_get('@@group_by')
   end
 
   # 
@@ -465,6 +591,7 @@ class Manager
     end
   end
 
+  # @return [Any] Any instance with ID +item_id+
   def get(item_id)
     item_id = item_id.to_i
     @table || load_data
@@ -677,13 +804,27 @@ class Manager
     end
   end
 
-  # @prop All data properties as instance of {DataManager::Property}
+  # @return [Array<Property>] All data properties as instance
+  # @note
+  #   Also product @table_properties, a table with key = :prop and
+  #   value is instance DataManager::Property
+  # 
   def properties
     @properties ||= begin
       data_properties.map.with_index do |dproperty, idx|
         dproperty.merge!(index: idx)
         Property.new(self, dproperty)
       end
+    end
+  end
+
+  # @return [Hash] Table of properties. Key is property@prop, value
+  # is DataManager::Property instance.
+  def table_properties
+    @table_properties ||= begin
+      tbl = {}; properties.each do |property|
+        tbl.merge!(property.prop => property)
+      end; tbl
     end
   end
 
