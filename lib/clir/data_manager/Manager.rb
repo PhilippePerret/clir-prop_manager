@@ -311,21 +311,14 @@ class Manager
   #   La liste de précédence se fiche de savoir s'il s'agit d'un
   #   item ou d'un groupement d'items 
   # 
+  # Note : on va utiliser un autre system de classement, avec
+  # sort et precedence_ids.index(<item id>)
+  # La liste classée ser
   def get_choices_with_precedences(options)
-    list = nil
-    if File.exist?(precedence_list)
-      # puts "Le fichier #{precedence_list.inspect} existe".bleu
-      # sleep 10
-      all_ids = @table.keys.join(',').split(',').map(&:to_i)
-      list = precedence_ids.map do |n| 
-        all_ids.delete(n)
-        classe.get(n) # peut être nil, si destruction
-      end.compact
-      # On ajoute ceux qui n'ont jamais été choisis en précédence
-      all_ids.each { |nid| list << @table[nid] }
-    else
-      list = @items
-    end
+    # 
+    # La liste au départ
+    # 
+    list = @items
 
     # 
     # Filtrer la liste si nécessaire
@@ -336,6 +329,16 @@ class Manager
     # Grouper les éléments si nécessaire
     # 
     list = group_items_of_list(list, options)
+
+    # 
+    # Quand on a la liste finale, on peut régler la précédence si
+    # elle est définie
+    # 
+    if File.exist?(precedence_list)
+      list.sort! do |a, b|
+        (precedence_ids.index(a.id)||10000) <=> (precedence_ids.index(b.id)||10000)
+      end
+    end
 
     # 
     # On retourne des menus pour TTY-Prompt
