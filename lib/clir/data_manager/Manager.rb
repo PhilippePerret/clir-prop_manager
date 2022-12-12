@@ -1,4 +1,11 @@
 module Clir
+#
+# Structure qui permet de conserver les items groupés
+# @note
+#   Cf. @@group_by et le manuel.
+# 
+GroupedItems = Struct.new(:name, :id, :items)
+
 module DataManager
 class << self
   def new(classe, data_properties = nil)
@@ -164,7 +171,7 @@ class Manager
       choixs = choixs.map do |choix|
         next if choix.nil?
         choose_precedence_set(choix.id)
-        if choix.instance_of?(GroupedItem)
+        if choix.instance_of?(GroupedItems)
           choose_in_list_of_grouped_items(choix, options)
         else
           choix
@@ -187,7 +194,7 @@ class Manager
       # dans cette liste l'item qui sera renvoyé. Sinon, on retourne
       # l'item choisi.
       # 
-      if choix.instance_of?(GroupedItem)
+      if choix.instance_of?(GroupedItems)
         choix = choose_in_list_of_grouped_items(choix, options)
       end
       choix
@@ -195,7 +202,7 @@ class Manager
   end
 
   # @return [Any] Any instance chosen in +group+ 
-  # @param [GroupedItems] group Instance with items grouped
+  # @param [GroupedItemss] group Instance with items grouped
   #
   def choose_in_list_of_grouped_items(group, options)
     choices = group.items.map do |item|
@@ -369,7 +376,7 @@ class Manager
   #   Cf. le manuel pour le détail de l'utilisation.
   # 
   def group_items_of_list(list, options = nil)
-    return list unless options[:group_by] || items_grouped_by
+    return list if options[:group_by].nil? && items_grouped_by.nil?
     # 
     # La clé de groupement
     # 
@@ -378,10 +385,6 @@ class Manager
     # La clé de groupe fait-elle référence à une classe relative ?
     # 
     is_relative_class = groupby.to_s.match?(/_ids?$/)
-    #
-    # La structure qui va permettre de conserver les groupes
-    # 
-    Object.const_set('GroupedItem', Struct.new(:name, :id, :items))
     # 
     # Table des groupes initiés
     # 
@@ -409,7 +412,7 @@ class Manager
             else
               property.name
             end
-          group = GroupedItem.new(nom, group_id, [])
+          group = GroupedItems.new(nom, group_id, [])
           groups.merge!(group_id => group)
           final_list << group
         end
@@ -501,7 +504,11 @@ class Manager
     classe.class_variable_get("@@save_format")
   end
   def items_grouped_by
-    classe.class_variable_get('@@group_by')
+    @items_grouped_by ||= begin
+      if classe.class_variables.include?(:'@@group_by')
+        classe.class_variable_get('@@group_by')
+      end
+    end
   end
 
   # 

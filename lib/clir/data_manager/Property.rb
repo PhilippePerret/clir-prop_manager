@@ -85,9 +85,15 @@ class Property
           # Type :select
           # 
           choices = select_values_with_precedences(instance)
-          value = Q.select(question, choices, {default:default_select_value(instance, choices), per_page:choices.count})
-          values(instance).set_last(value)
-          value
+          if multi?
+            vals = Q.multi_select(question, choices, {default:default_select_value(instance, choices), per_page:choices.count})
+            vals.each { |val| values(instance).set_last(val) }
+            vals
+          else
+            value = Q.select(question, choices, {default:default_select_value(instance, choices), per_page:choices.count})
+            values(instance).set_last(value)
+            value
+          end
         when :bool
           Q.select(question, BOOLEAN_VALUES, {default: boolean_default_value(instance), per_page:BOOLEAN_VALUES.count})
         else
@@ -311,13 +317,20 @@ class Property
   #   nissent pas (sinon il y aurait des "trous" dans la table)
   # 
   def tablizable?
+    specs || raise(ERRORS[:specs_undefined] % prop)
     :TRUE == @isremovable ||= true_or_false(specs & TABLEIZABLE > 0)    
+  end
+
+  # @return [Boolean] true si property can have multi_select values.
+  def multi?
+    :TRUE == @ismultiselect ||= true_or_false(data[:multi] == true)
   end
 
   # @return TRUE si la propriété :if n'est pas définie ou si elle
   # retourne la valeur true (donc elle retourne true quand la 
   # propriété existe pour l'instance donnée)
   def if_able?(instance)
+    specs || raise(ERRORS[:specs_undefined] % prop)
     return true if if_attr.nil?
     case if_attr
     when Symbol

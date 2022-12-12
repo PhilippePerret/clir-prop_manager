@@ -1,3 +1,4 @@
+require 'csv'
 require 'clir'
 require "clir/data_manager/version"
 require 'clir/data_manager/module_constants'

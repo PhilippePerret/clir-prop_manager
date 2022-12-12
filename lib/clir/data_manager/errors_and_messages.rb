@@ -17,6 +17,7 @@ module DataManager
       choice_unfound_in_choices_list: "Impossible de trouver la valeur (:value) '%s' dans la liste des valeurs de la propriété %s (%s)…",
       unknown_if_attribut: "Je ne sais pas traiter la valeur %s pour l'attribut :if…",
       unable_to_get_class_from_class_min: "Impossible de tirer la classe relative de '%s'%s",
+      specs_undefined: "La propriété :%s doit définir ses :specs",
 
       required_property: "La propriété %s est absolument requise.",
       invalid_mail: "Le mail '%s' est invalide.",
@@ -42,6 +43,7 @@ module DataManager
       choice_unfound_in_choices_list: "Unfound value (:value) '%s' in values of %s property… (%s)",
       unknown_if_attribut: "Can't treat %s value for :if attribute…",
       unable_to_get_class_from_class_min: "Unable to get relative class from '%s'%s",
+      specs_undefined: ":%s property should defined its :specs",
     
       required_property: "Property %s is required.",
       invalid_mail: "Invalid email address '%s'.",
