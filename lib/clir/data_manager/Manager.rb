@@ -47,6 +47,7 @@ class Manager
 
   attr_reader :classe
   attr_reader :data_properties
+  attr_reader :items
   
   def initialize(classe, data_properties = nil)
     @data_properties = data_properties || begin
@@ -583,6 +584,10 @@ class Manager
     end
     classe.define_singleton_method 'class_name' do
       my.class_name
+    end
+    classe.define_singleton_method 'get_all' do |options = nil|
+      my.get(1) # pour charger si c'est nécessaire
+      my.filter_items_of_list(my.items, options || {})
     end
     classe.define_singleton_method 'display' do |options = nil|
       my.display_items(options)

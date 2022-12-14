@@ -13,11 +13,13 @@ module DataManager
       require_save_location_file: '%s@@save_location doit être un fichier, pas un dossier, pour :file et :conf.',
       bas_save_format: '%s@@save_format doit être :csv ou :yaml exclusivement.',
       no_csv_format_with_card: 'L’enregistrement par fiche (:card) ne permet pas le format :csv.',
-      require_relative_class: 'Pour la propriété "%s", la classe relative doit absolument existée, correspondant au nom de la propriété sans _id(s).',
+      require_relative_class: 'Pour la propriété "%s", la classe relative doit absolument exister, correspondant au nom de la propriété sans _id(s).',
       choice_unfound_in_choices_list: "Impossible de trouver la valeur (:value) '%s' dans la liste des valeurs de la propriété %s (%s)…",
       unknown_if_attribut: "Je ne sais pas traiter la valeur %s pour l'attribut :if…",
       unable_to_get_class_from_class_min: "Impossible de tirer la classe relative de '%s'%s",
       specs_undefined: "La propriété :%s doit définir ses :specs",
+      value_doesnt_respond_to: "La valeur %s:%s ne répond pas à %s",
+      no_name_for_property: "La propriété %s doit absolument définir son :name (si c'est une procédure, s'assurer qu'elle retourne bien une valeur).",
 
       required_property: "La propriété %s est absolument requise.",
       invalid_mail: "Le mail '%s' est invalide.",
@@ -44,6 +46,8 @@ module DataManager
       unknown_if_attribut: "Can't treat %s value for :if attribute…",
       unable_to_get_class_from_class_min: "Unable to get relative class from '%s'%s",
       specs_undefined: ":%s property should defined its :specs",
+      value_doesnt_respond_to: "%s:%s value doesn't respond to %s",
+      no_name_for_property: "%s property should defined its :name attribute (if it's a Proc, make sure it returns a value).",
     
       required_property: "Property %s is required.",
       invalid_mail: "Invalid email address '%s'.",

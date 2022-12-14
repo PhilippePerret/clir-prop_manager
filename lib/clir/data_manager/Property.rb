@@ -178,7 +178,7 @@ class Property
           end.join(', ')
         end
       else
-        raise "Je ne connais pas la classe relative"
+        raise ERRORS[:require_relative_class]
       end
     elsif type == :select && data[:values]
       #
@@ -191,7 +191,7 @@ class Property
           return dchoix[:full_name]||dchoix[:name]
         end
       end
-      raise ERRORS[:choice_unfound_in_choices_list] % [curval.inspect, self.name, values_for_instance.inspect]
+      raise ERRORS[:choice_unfound_in_choices_list] % [curval.inspect, self.name(instance), values_for_instance.inspect]
     else
       # 
       # En dernier recours, la valeur telle quelle
@@ -248,7 +248,7 @@ class Property
       elsif new_value.respond_to?(itransform)
         new_value.send(itransform)
       else
-        raise "La valeur #{new_value.inspect} ne répond pas à #{itransform.inspect}…"
+        raise ERRORS[:value_doesnt_respond_to] % [new_value.inspect, "#{new_value.class}", itransform.inspect]
       end
     when Proc
       itransform.call(instance, new_value)
@@ -347,13 +347,20 @@ class Property
   # --- Hard Coded Properties ---
 
   def index;      @index        ||= data[:index]      end
-  def name;       @name         ||= data[:name]       end
   def specs;      @specs        ||= data[:specs]      end
   def prop;       @prop         ||= data[:prop]       end
   def type;       @type         ||= data[:type]       end
   def quest;      @quest        ||= data[:quest]      end
   def if_attr;    @ifattr       ||= data[:if]         end
   def short_name; @short_name   ||= data[:short_name] end
+  def name(instance = nil)
+    @name ||= data[:name]
+    if @name.is_a?(Proc)
+      @name.call(instance)
+    else
+      @name
+    end
+  end
 
 
   def values(instance = nil)

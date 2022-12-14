@@ -97,7 +97,8 @@ class Editor
     cs = manager.properties.map do |property|
       next if not(property.editable?(instance))
       pvalue = property.formated_value_in(instance)
-      pname  = property.name
+      pname  = property.name(instance)
+      pname || raise(ERRORS[:no_name_for_property] % property.prop.inspect)
       max_label_width = pname.length if pname.length > max_label_width
       [pname, pvalue]
     end.compact
@@ -149,17 +150,17 @@ class Editor
         index_default = real_current_index if index_default.nil?
       end
       # choix = cs.shift
-      # choix = "#{property.name.ljust(max_label_width)}#{curval}"
+      # choix = "#{property.name(instance).ljust(max_label_width)}#{curval}"
       # 
       # Faut-il utiliser une méthode de formatage d'affichage
       # 
       fvalue  = property.formated_value_in(instance)
-      choix   = "#{property.name.ljust(max_label_width)}#{fvalue}"
+      choix   = "#{property.name(instance).ljust(max_label_width)}#{fvalue}"
       # 
       # Couleur en fonction de propriété requise ou non
       # 
       if property.required?(instance)
-        choix = choix.send(isdef ? :bleu : :rouge)
+        choix = choix.send(isdef ? :bleu : :orange)
       end
       {name: choix, value: property}
     end.compact
