@@ -216,18 +216,55 @@ class Manager
   # informations réduites.
   # 
   # @param options [Hash|Nil]  Options
-  # @param @options :filter Filtre pour n'afficher que les items
+  # @option options [Hash] :filter Filtre pour n'afficher que les items
   #     correspondant à :filter. :filter est une table de clés qui
   #     correspondent aux propriétés de l'item et de valeurs qui sont
   #     les valeurs attendues.
+  # @option options [Periode] :periode Période concernée par l'affichage.
   # 
   def display_items(options = nil)
     full_loaded? || load_data
+    # 
+    # Dans le cas d'absence d'items
+    # 
     @items.count > 0 || begin
       puts MSG[:no_items_to_display].orange
       return
     end
     options ||= {}
+    #
+    # Si une période est déterminée, il faut ajouter cette condition
+    # au filtre.
+    # 
+    unless options[:periode].nil?
+      # L'idée c'est de déterminer que le temps de l'item doit être
+      # supérieur ou égal au temps de départ de la période et doit
+      # être inférieur ou égal au temps de fin de la période.
+      # Le tout est de savoir quel temps prendre en compte. On 
+      # cherche dans cet ordre
+      #   :date, :created_at, :time
+      # Pour le savoir on prend le premier élément, qui existe 
+      # forcément.
+      item1 = @items.first
+      time_prop = 
+        if item1.respond_to?(:date)
+          :date
+        elsif item1.respond_to?(:created_at)
+          :created_at
+        elsif item1.respond_to?(:time)
+          :time
+        elsif not(time_property)
+          time_property
+        else
+          raise ERRORS[:no_time_property] % ["#{classe.class}"]
+        end
+      options.key?(:filter) || options.merge!(filter: {})
+      options[:filter].merge!( time_prop => {
+        start_time: options[:periode].from,
+        end_time:   options[:periode].to
+      })
+    end
+
     # 
     # Filtrage de la liste
     # 

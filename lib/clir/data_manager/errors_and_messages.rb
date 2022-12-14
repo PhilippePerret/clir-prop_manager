@@ -20,6 +20,8 @@ module DataManager
       specs_undefined: "La propriété :%s doit définir ses :specs",
       value_doesnt_respond_to: "La valeur %s:%s ne répond pas à %s",
       no_name_for_property: "La propriété %s doit absolument définir son :name (si c'est une procédure, s'assurer qu'elle retourne bien une valeur).",
+      unknown_values_method: "Personne ne semble comprendre la méthode %s…",
+      no_time_property: "La classe %s n'utilisant aucune des propriétés :date, :created_at ou :time, il faut qu'elle définisse la propriété à prendre comme temps de référence (en mettant 'property_time:true' dans la définission de la propriété) ou en n'utilisant pas de période sur ces instances.",
 
       required_property: "La propriété %s est absolument requise.",
       invalid_mail: "Le mail '%s' est invalide.",
@@ -48,6 +50,8 @@ module DataManager
       specs_undefined: ":%s property should defined its :specs",
       value_doesnt_respond_to: "%s:%s value doesn't respond to %s",
       no_name_for_property: "%s property should defined its :name attribute (if it's a Proc, make sure it returns a value).",
+      unknown_values_method: "Can't deal with %s values method…",
+      no_time_property: "Class %s defines none of these properties :date, :created_at or :time, so one should define the reference property to take as time (by setting 'property_time:true' in its attributes) or do not use periode filter with instances of this class.",
     
       required_property: "Property %s is required.",
       invalid_mail: "Invalid email address '%s'.",

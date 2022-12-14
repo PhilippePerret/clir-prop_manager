@@ -368,11 +368,19 @@ class Property
     vs = case (vs = data[:values])
     when Symbol
       if manager.classe.respond_to?(vs)
-        manager.classe.send(vs)
+        begin
+          manager.classe.send(vs)
+        rescue ArgumentError
+          manager.classe.send(vs, instance)
+        end
       elsif manager.respond_to?(vs)
-        manager.send(vs)
+        begin
+          manager.send(vs)
+        rescue ArgumentError
+          manager.send(vs, instance)
+        end
       else
-        raise "Personne ne semble comprendre la méthode #{vs.inspect}"
+        raise ERRORS[:unknown_values_method] % vs.inspect
       end
     when Proc
       vs.call(instance)

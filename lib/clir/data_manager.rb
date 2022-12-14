@@ -4,6 +4,7 @@ require "clir/data_manager/version"
 require 'clir/data_manager/module_constants'
 require 'clir/data_manager/constants'
 require 'clir/data_manager/errors_and_messages'
+require 'clir/data_manager/Periode'
 require 'clir/data_manager/Manager'
 require 'clir/data_manager/Property'
 require 'clir/data_manager/Displayer'
