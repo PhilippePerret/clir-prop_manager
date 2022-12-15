@@ -352,6 +352,7 @@ class Property
   def type;       @type         ||= data[:type]       end
   def quest;      @quest        ||= data[:quest]      end
   def if_attr;    @ifattr       ||= data[:if]         end
+  def valid_if;   @valid_if     ||= data[:valid_if]   end
   def short_name; @short_name   ||= data[:short_name] end
   def name(instance = nil)
     @name ||= data[:name]
@@ -374,11 +375,19 @@ class Property
           manager.classe.send(vs, instance)
         end
       elsif manager.respond_to?(vs)
-        begin
+        nargs = manager.method(d).arity        
+        puts "Nombre d'arguments attendus par (#{vs}) : #{nargs}".orange
+        puts 10
+        if nargs == 0
           manager.send(vs)
-        rescue ArgumentError
+        else
           manager.send(vs, instance)
         end
+        # begin
+        #   manager.send(vs)
+        # rescue ArgumentError
+        #   manager.send(vs, instance)
+        # end
       else
         raise ERRORS[:unknown_values_method] % vs.inspect
       end
@@ -398,7 +407,14 @@ class Property
       if instance.respond_to?(d)
         instance.send(d)
       elsif instance.class.respond_to?(d)
-        d = instance.class.send(d)
+        nargs = instance.class.method(d).arity
+        puts "Nombre d'arguments attendus : #{nargs}".orange
+        puts 10
+        begin
+          d = instance.class.send(d)
+        rescue ArgumentError
+          d = instance.class.send(d, instance)
+        end
       else
         # La garder telle quelle
       end

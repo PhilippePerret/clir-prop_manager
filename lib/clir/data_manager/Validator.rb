@@ -34,6 +34,7 @@ class Validator
     end
 
     if new_value
+
       case property.type
 
       when :email
@@ -64,11 +65,41 @@ class Validator
         if (err = people_invalid?(new_value))
           return ERRORS[:invalid_people] % [property.name, err]
         end
+      end # suivant property.type
+
+      if property.valid_if
+        if (err = proceed_validation_propre(property, new_value, instance))
+          return ERRORS[:invalid_property] % [property.name, err]
+        end
       end
 
     end #/si la nouvelle valeur est défini
 
     return nil # OK
+  end
+
+  # Quand les attributs de la propriété définissent :valid_if qui
+  # permet de procéder à une validation de la donnée +new_value+
+  # 
+  # @return [NilClass|String] Return nil si aucune erreur n'est 
+  # trouvée, sinon, retourne l'erreur rencontrée.
+  def proceed_validation_propre(property, new_value, instance)
+    meth = property.valid_if
+    case meth 
+      when Symbol
+        if new_value.respond_to?(meth)
+          new_value.send(meth)
+        elsif instance.respond_to?(meth)
+          instance.send(meth, new_value)
+        elsif instance.class.respond_to?(meth)
+          instance.class.send(meth, new_value, instance)
+        end
+      when Proc
+        property.valid_if.call(new_value, instance)
+      else
+        raise ERRORS[:unknow_validate_method] % meth.inspect
+      end
+    end
   end
 
   # @return true si la donnée +people+ est une donnée de personne

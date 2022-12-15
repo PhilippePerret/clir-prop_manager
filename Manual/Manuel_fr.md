@@ -419,6 +419,22 @@ La **valeur** correspond à une propriété de l’instance en édition (ici la 
 
 ---
 
+<a name="attribut-valid_if"></a>
+
+### Attribut`:valid_if`
+
+Définition une procédure de validation de la donnée particulière. Peut être :
+
+* une **Procédure (`Proc`)**. Elle est appelée avec en premier argument la nouvelle valeur et en second argument l’instance de l’objet traité,
+* un **`Symbol`** peut être :
+  * une méthode (prédicate) appliqué à la valeur elle-même. Par exemple `numeric?`,
+  * une méthode d’instance de l’objet traité. Elle reçoit en premier argument la nouvelle valeur testée,
+  * une méthode de classe de l’objet traité. Elle reçoit les mêmes argument que la procédure (nouvelle valeur, instance).
+
+Toutes ces méthodes doivent retourner `nil` si la nouvelle donnée est valide, ou le message d’erreur en cas de problème.
+
+---
+
 <a name="attribut-itransform"></a>
 
 ### Attribut `:itransform`

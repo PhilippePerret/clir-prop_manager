@@ -259,10 +259,9 @@ class Manager
           raise ERRORS[:no_time_property] % ["#{classe.class}"]
         end
       options.key?(:filter) || options.merge!(filter: {})
-      options[:filter].merge!( time_prop => {
-        start_time: options[:periode].from,
-        end_time:   options[:periode].to
-      })
+      options[:filter].merge!( 
+        time_prop => Proc.new { |inst| options[:periode].time_in?(inst.send(time_prop) ) }
+      )
     end
 
     # 
@@ -478,7 +477,12 @@ class Manager
   #                       attendues (comparées avec '!=').
   def item_match_filter?(item, filter)
     filter.each do |key, expected|
-      return false if item.send(key) != expected
+      case expected
+      when Proc
+        return false if not(expected.call(item))
+      else
+        return false if item.send(key) != expected
+      end
     end
     return true
   end
