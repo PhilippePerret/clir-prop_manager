@@ -30,7 +30,12 @@ class Manager
   def __new_id
     case save_system
     when :card
-      id = File.read(last_id_path).strip.to_i + 1
+      id = if File.exist?(last_id_path)
+        File.read(last_id_path).strip.to_i + 1
+      else 
+        mkdir(File.dirname(last_id_path)) # to make sure folder exists
+        1 
+      end
       File.write(last_id_path, id.to_s)
       return id
     when :file
@@ -112,6 +117,7 @@ class Manager
   end
 
   def add(item)
+    item.data.merge!(id: __new_id) if item.data[:id].nil?
     @items ||= []
     @items << item
     @table ||= {}
@@ -620,6 +626,10 @@ class Manager
     classe.define_singleton_method 'save_location' do
       return my.save_location
     end
+    classe.define_singleton_method 'items' do
+      my.load_data if not(my.full_loaded?)
+      my.items
+    end
     classe.define_singleton_method 'get' do |item_id|
       data_manager.get(item_id)
     end
@@ -627,7 +637,7 @@ class Manager
       my.class_name
     end
     classe.define_singleton_method 'get_all' do |options = nil|
-      my.get(1) # pour charger si c'est nécessaire
+      my.load_data if not(my.full_loaded?)
       my.filter_items_of_list(my.items, options || {})
     end
     classe.define_singleton_method 'display' do |options = nil|
@@ -706,7 +716,10 @@ class Manager
       case save_format
       when :yaml
         classe.define_method "data_file" do
-          @data_file ||= File.join(my.save_location,"#{id}.yaml")
+          @data_file ||= begin
+            mkdir(my.save_location)
+            File.join(my.save_location,"#{id}.yaml")
+          end
         end
         classe.define_method "save" do
           if new?

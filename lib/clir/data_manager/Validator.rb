@@ -86,19 +86,18 @@ class Validator
   def proceed_validation_propre(property, new_value, instance)
     meth = property.valid_if
     case meth 
-      when Symbol
-        if new_value.respond_to?(meth)
-          new_value.send(meth)
-        elsif instance.respond_to?(meth)
-          instance.send(meth, new_value)
-        elsif instance.class.respond_to?(meth)
-          instance.class.send(meth, new_value, instance)
-        end
-      when Proc
-        property.valid_if.call(new_value, instance)
-      else
-        raise ERRORS[:unknow_validate_method] % meth.inspect
+    when Symbol
+      if new_value.respond_to?(meth)
+        new_value.send(meth)
+      elsif instance.respond_to?(meth)
+        instance.send(meth, new_value)
+      elsif instance.class.respond_to?(meth)
+        instance.class.send(meth, new_value, instance)
       end
+    when Proc
+      property.valid_if.call(new_value, instance)
+    else
+      raise ERRORS[:unknow_validate_method] % meth.inspect
     end
   end
 
