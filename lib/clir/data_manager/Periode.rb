@@ -112,6 +112,7 @@ class Periode
   #                     [String] "JJ/MM/AAAA"
   #                     [Integer] 
   def time_in?(time)
+    return false if time.nil?
     time = date_from(time)
     return time >= from_date && time <= to_date
   end

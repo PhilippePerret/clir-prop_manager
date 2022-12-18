@@ -64,6 +64,7 @@ class Manager
     # Pour que rubocop ne râle pas…
     # 
     @table  = nil
+    @is_full_loaded = false
     # 
     # Méthodes d'instance
     # 
@@ -237,50 +238,11 @@ class Manager
       puts MSG[:no_items_to_display].orange
       return
     end
-    options ||= {}
-    #
-    # Si une période est déterminée, il faut ajouter cette condition
-    # au filtre.
-    # 
-    unless options[:periode].nil?
-      # L'idée c'est de déterminer que le temps de l'item doit être
-      # supérieur ou égal au temps de départ de la période et doit
-      # être inférieur ou égal au temps de fin de la période.
-      # Le tout est de savoir quel temps prendre en compte. On 
-      # cherche dans cet ordre
-      #   :date, :created_at, :time
-      # Pour le savoir on prend le premier élément, qui existe 
-      # forcément.
-      item1 = @items.first
-      time_prop = 
-        if item1.respond_to?(:date)
-          :date
-        elsif item1.respond_to?(:created_at)
-          :created_at
-        elsif item1.respond_to?(:time)
-          :time
-        elsif not(time_property)
-          time_property
-        else
-          raise ERRORS[:no_time_property] % ["#{classe.class}"]
-        end
-      options.key?(:filter) || options.merge!(filter: {})
-      options[:filter].merge!( 
-        time_prop => Proc.new { |inst| options[:periode].time_in?(inst.send(time_prop) ) }
-      )
-    end
 
     # 
-    # Filtrage de la liste
+    # Filtrage de la liste (s'il le faut)
     # 
-    if options[:filter]
-      disp_items = []
-      @items.each do |item|
-        disp_items << item if item_match_filter?(item, filter)
-      end
-    else
-      disp_items = @items
-    end
+    disp_items = filter_items_of_list(@items, options)
 
     #
     # Procédure qui permet de récupérer la liste des données pour
@@ -299,7 +261,7 @@ class Manager
       title:    "AFFICHAGE DES #{class_name}S",
       header:   header
     })
-    @items.each do |item|
+    disp_items.each do |item|
       tbl <<  tableizable_props.map do |property|
         property.formated_value_in(item) || '---'
       end
@@ -405,7 +367,53 @@ class Manager
   # existe.
   # @return [Array] La liste des éléments filtrés
   def filter_items_of_list(list, options)
-    return list unless options[:filter]
+    return list unless options && options[:filter]
+    # 
+    # Duplication pour pouvoir le modifier
+    # 
+    option_filter = options[:filter].dup
+    # 
+    # Préparer éventuellement certaines valeurs du filtre
+    # 
+    option_filter.each do |k, v|
+      case k
+      when :periode
+        #
+        # Si une période est déterminée, il faut ajouter cette condition
+        # au filtre.
+        # 
+        # L'idée c'est de déterminer que le temps de l'item doit être
+        # supérieur ou égal au temps de départ de la période et doit
+        # être inférieur ou égal au temps de fin de la période.
+        # Le tout est de savoir quel temps prendre en compte. On 
+        # cherche dans cet ordre
+        #   :date, :created_at, :time
+        # Pour le savoir on prend le premier élément, qui existe 
+        # forcément.
+        item1 = list.first
+        time_prop = 
+          if item1.respond_to?(:date)
+            :date
+          elsif item1.respond_to?(:created_at)
+            :created_at
+          elsif item1.respond_to?(:time)
+            :time
+          elsif not(time_property)
+            time_property
+          else
+            raise ERRORS[:no_time_property] % ["#{classe.class}"]
+          end
+        # On prend la période en la retirant du filtre
+        periode = options[:filter].delete(:periode)
+        # Et on ajoute la condition sur le temps
+        options[:filter].merge!( 
+          time_prop => Proc.new { |inst| periode.time_in?(inst.send(time_prop) ) }
+        )
+      end #/case k
+    end
+    # 
+    # Sélectionner les items valides
+    # 
     list.select do |item|
       item_match_filter?(item, options[:filter])
     end
@@ -626,9 +634,13 @@ class Manager
     classe.define_singleton_method 'save_location' do
       return my.save_location
     end
-    classe.define_singleton_method 'items' do
+    classe.define_singleton_method 'items' do |options = nil|
       my.load_data if not(my.full_loaded?)
-      my.items
+      if options.nil?
+        my.items
+      else
+        get(options)
+      end
     end
     classe.define_singleton_method 'get' do |item_id|
       data_manager.get(item_id)
@@ -682,6 +694,8 @@ class Manager
     end
     classe.alias_method(:show, :display)
     classe.define_method 'remove' do |options = {}|
+      puts "JE DOIS APPRENDRE À DÉTRUIRE UNE DONNÉE (#{__FILE__}:#{__LINE__})".rouge
+      exit
       my.remove(self, options)
     end
     classe.alias_method(:destroy, :remove)
@@ -808,12 +822,10 @@ class Manager
       end
     when prop.end_with?('_id')
       classe.define_method "#{class_min}" do # p.e. def user; ... end
-        instance_variable_get("@#{class_min}") || begin
+        if instance_variables.include?("@#{class_min}".to_sym)
+          instance_variable_get("@#{class_min}")
+        else
           item = other_class.get(self.send(prop))
-          # puts "Je dois obtenir le #{prop.inspect} ##{self.send(prop).inspect}".jaune
-          # puts "Dans la classe #{other_class.name}".jaune
-          # puts "item = #{item.inspect}".jaune
-          # sleep 5
           instance_variable_set("@#{class_min}", item)
         end
       end
