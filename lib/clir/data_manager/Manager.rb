@@ -694,8 +694,14 @@ class Manager
     end
     classe.alias_method(:show, :display)
     classe.define_method 'remove' do |options = {}|
+
+
+
       puts "JE DOIS APPRENDRE À DÉTRUIRE UNE DONNÉE (#{__FILE__}:#{__LINE__})".rouge
       exit
+      
+
+
       my.remove(self, options)
     end
     classe.alias_method(:destroy, :remove)
