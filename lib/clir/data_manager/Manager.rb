@@ -642,6 +642,10 @@ class Manager
         get(options)
       end
     end
+    classe.define_singleton_method 'table' do
+      my.full_loaded? || my.load_data
+      my.instance_variable_get("@table")
+    end
     classe.define_singleton_method 'get' do |item_id|
       data_manager.get(item_id)
     end
@@ -654,6 +658,9 @@ class Manager
     end
     classe.define_singleton_method 'display' do |options = nil|
       my.display_items(options)
+    end
+    classe.define_singleton_method 'remove' do |instances, options = nil|
+      my.remove(instances, options)
     end
     if classe.methods.include?(:choose)
       # Rien à faire
@@ -694,14 +701,6 @@ class Manager
     end
     classe.alias_method(:show, :display)
     classe.define_method 'remove' do |options = {}|
-
-
-
-      puts "JE DOIS APPRENDRE À DÉTRUIRE UNE DONNÉE (#{__FILE__}:#{__LINE__})".rouge
-      exit
-      
-
-
       my.remove(self, options)
     end
     classe.alias_method(:destroy, :remove)
@@ -876,10 +875,57 @@ class Manager
     return instance # chainage
   end
 
-  def remove(instance, options = nil)
-    instance.before_remove if instance.respond_to?(:before_remove)
-    puts "Je dois apprendre à détruire l'instance #{instance.inspect}.".jaune
-    instance.after_remove if instance.respond_to?(:after_remove)
+  # @note
+  #   Cette méthode est testée dans remove_test.rb
+  # 
+  def remove(instances, options = nil)
+    has_method_before = instances.first.respond_to?(:before_remove)
+    has_method_after  = instances.first.respond_to?(:after_remove)
+    # 
+    # Tout charger si ça n'est pas encore fait
+    full_loaded? || load_data 
+    # 
+    # Pour conserver les IDs supprimés et les supprimer plus
+    # rapidement de @items
+    # 
+    table_removed_ids = {}
+    # 
+    # Boucle sur toutes les instances à détruire
+    # 
+    instances.each do |instance|
+      # Méthode avant ?
+      instance.send(:before_remove) if has_method_before
+      # 
+      # Si les instancences sont sauvées dans des cartes, il faut les
+      # détruire
+      # 
+      if save_system == :card
+        File.delete(instance.data_file) if File.exist?(instance.data_file)
+      end
+      # 
+      # Pour pouvoir retirer l'instance de @items
+      # 
+      table_removed_ids.merge!(instance.id => true)
+      # 
+      # Retirer l'instance de @table
+      # 
+      @table.delete(instance.id)
+      # 
+      # Faut-il appeler une méthode après la destruction ?
+      # 
+      instance.send(:after_remove) if has_method_after
+    end #/fin boucle sur les instances à détruire
+    # 
+    # On retire ces items de @items
+    # 
+    @items.reject! { |item| table_removed_ids[item.id] }
+    #
+    # Si les données sont enregistrées dans un fichier, on les 
+    # sauve maintenant
+    # 
+    save_all if save_system == :file
+
+    return true
   end
 
   # Loop on every property (as instances)

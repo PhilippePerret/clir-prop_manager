@@ -1,3 +1,4 @@
+require 'yaml'
 require 'csv'
 require 'clir'
 require "clir/data_manager/version"
