@@ -128,6 +128,10 @@ class Editor
     # Boucle pour récupérer tous les menus à afficher
     # 
     cs = manager.properties.map do |property|
+      # 
+      # Si ce n'est pas une propriété éditable (pas ses :specs), on
+      # la passe.
+      # 
       next if not(property.editable?(instance))
       # 
       # Est-ce une propriété requise ? (en fonction ou non de l'instance)
@@ -139,7 +143,7 @@ class Editor
       isdef  = curval != nil
       #
       # Si c'est une création d'instance, on se placera automati-
-      # quement sur le premier champ (property) qui n'est pas définie
+      # quement sur le premier champ (property) qui n'est pas défini
       # 
       if index_default.nil? && instance.new? && not(isdef)
         index_default = real_current_index

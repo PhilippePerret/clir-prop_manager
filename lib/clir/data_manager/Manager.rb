@@ -929,12 +929,20 @@ class Manager
         end
       end
     when prop.end_with?('_id')
+      # 
+      # @note
+      #   On ne va mettre la propriété @class_min de l'instance en
+      #   variable d'instance seulement si elle est définie. Dans le
+      #   cas contraire, une fois qu'elle est évaluée à nil, elle
+      #   resterait nil pour toujours…
+      # 
       classe.define_method "#{class_min}" do # p.e. def user; ... end
-        if instance_variables.include?("@#{class_min}".to_sym)
-          instance_variable_get("@#{class_min}")
+        if instance_variables.include?("@#{class_min}".to_sym) 
+          instance_variable_get("@#{class_min}") # forcément non nil
         else
-          item = other_class.get(self.send(prop))
-          instance_variable_set("@#{class_min}", item)
+          inst = other_class.get(self.send(prop))
+          instance_variable_set("@#{class_min}", inst) unless inst.nil?
+          return inst
         end
       end
       classe.define_method "#{class_min}=" do |owner| # p.e. user=

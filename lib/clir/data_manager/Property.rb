@@ -338,6 +338,8 @@ class Property
     when Symbol
       instance.send(if_attr)
     when Proc
+      puts "Test du if_able de #{self.name} par procédure : if_attr.call(instance) = #{if_attr.call(instance).inspect}"
+      puts "Instance testée : #{instance.inspect}"
       if_attr.call(instance)
     when TrueClass, FalseClass
       if_attr
