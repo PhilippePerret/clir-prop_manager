@@ -61,13 +61,13 @@ class Property
         when :date
           defvalue ||= Time.now.strftime(MSG[:date_format])
           Q.ask(question, {default: defvalue})&.strip
-        when :string, :email, :prix, :url, :people, :number
+        when :string, :email, :prix, :url, :people, :number, :float
           nval = Q.ask(question, {help:"'---' = nul", default: defvalue})
           nval = nil if nval == '---'
           unless nval.nil?
             nval = nval.force_encoding('UTF-8').strip
             case type
-            when :number
+            when :number, :float
               if nval.sub(/,/,'.').match?(/\./)
                 nval = nval.to_f
               else
@@ -161,6 +161,8 @@ class Property
       # Si l'instance définit la méthode de formatage
       # 
       instance.send("f_#{prop}".to_sym)
+    elsif prop == :name && instance.respond_to?(:best_name)
+      instance.best_name
     elsif prop.match?(/_ids?$/) && [:id, :ids].include?(type)
       # 
       # Propriété avec classe relative

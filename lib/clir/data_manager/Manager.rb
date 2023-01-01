@@ -30,12 +30,7 @@ class Manager
   def __new_id
     case save_system
     when :card
-      id = if File.exist?(last_id_path)
-        File.read(last_id_path).strip.to_i + 1
-      else 
-        mkdir(File.dirname(last_id_path)) # to make sure folder exists
-        1 
-      end
+      id = __last_id + 1
       File.write(last_id_path, id.to_s)
       return id
     when :file
@@ -48,6 +43,16 @@ class Manager
       puts "Je ne sais pas encore gérer le système de sauvegarde :conf.".orange
       raise(ExitSilently)
     end
+  end
+
+  # @return [Integer] Last used ID for objet/instance
+  def __last_id
+    if File.exist?(last_id_path)
+      File.read(last_id_path).strip.to_i
+    else 
+      mkdir(File.dirname(last_id_path)) # to make sure folder exists
+      0 
+    end    
   end
 
   attr_reader :classe
@@ -141,12 +146,13 @@ class Manager
   #     Avec le filtre, les instances n'apparaitront pas à l'écran, contrairement à :exclude.
   # @option options [Array]   :exclude    Liste d'identifiants qu'ils faut rendre "inchoisissables".
   # @option options [Array]   :default    Quand :multi, les valeurs à sélectionner par défaut. C'est une liste d'identifiants.
+  # @option options [Symbol]  :sort_key   Clé (propriété) de classement de la liste
+  # @option options [String]  :sort_dir   Direction du classement, 'asc' ou 'desc' ('asc' par défaut, si :sort_key est défini)
   # 
-  def choose(options = nil)
+  def choose(**options)
     # 
     # Définition des options
     # 
-    options ||= {}
     options.key?(:multi) || options.merge!(multi: false)
     options[:question]   ||= "#{MSG[:choose]} : "
     options[:question] = options[:question].jaune
@@ -154,6 +160,9 @@ class Manager
     @tty_name_procedure = nil
     # 
     # Définition des menus
+    # 
+    # Soit par précédences, soit par classement si options[:sort_key]
+    # est défini.
     # 
     cs = get_choices_with_precedences(options)
     # 
@@ -214,9 +223,9 @@ class Manager
   #
   def choose_in_list_of_grouped_items(group, options)
     choices = group.items.map do |item|
-      {name: item.name, value: item}
+      {name: item.best_name, value: item}
     end + [CHOIX_RENONCER]
-    Q.select(options[:question], choices, {per_page:choices.count})
+    Q.select(options[:question], choices, {per_page:choices.count, show_help:false, echo:false})
   end
 
   # Pour afficher des items les uns sur les autres, avec des
@@ -228,8 +237,11 @@ class Manager
   #     correspondent aux propriétés de l'item et de valeurs qui sont
   #     les valeurs attendues.
   # @option options [Periode] :periode Période concernée par l'affichage.
+  # @option options [Symbol]  :sort_key   Clé (propriété) de classement de la liste
+  # @option options [String]  :sort_dir   Direction du classement, 'asc' ou 'desc' ('asc' par défaut, si :sort_key est défini)
   # 
   def display_items(options = nil)
+    options ||= {}
     full_loaded? || load_data
     # 
     # Dans le cas d'absence d'items
@@ -243,6 +255,24 @@ class Manager
     # Filtrage de la liste (s'il le faut)
     # 
     disp_items = filter_items_of_list(@items, options)
+
+    # 
+    # Classement des items si nécessaire
+    # 
+    if options.key?(:sort_key)
+      sort_key = options[:sort_key]
+      if disp_items.first.respond_to?(sort_key)
+        disp_items = disp_items.sort do |a, b|
+          a.send(sort_key) <=> b.send(sort_key)
+        end
+        disp_items = disp_items.reverse if options[:sort_dir].to_s == 'asc'
+      else
+        # 
+        # Clé inconnue
+        # 
+        puts "Pour classer par la clé #{sort_key.inspect} il faudrait que les items la reconnaissent.".rouge
+      end
+    end
 
     #
     # Procédure qui permet de récupérer la liste des données pour
@@ -312,10 +342,16 @@ class Manager
   ##
   # @return [Array] Liste des "choices" pour le select de Tty-prompt
   # pour choisir une instance de la classe.
+  # 
   # Cette liste tient compte de la variable @@group_by de la classe,
   # qui détermine les regroupements de données à effectuer.
-  # La méthode retour$ne aussi une liste avec ITEMS CLASSÉS PAR 
-  # PRÉCÉDENCES si la liste de précédence existe.
+  # 
+  # La méthode retourne aussi une liste avec ITEMS CLASSÉS PAR 
+  # PRÉCÉDENCES aux conditions suivantes :
+  #   SI la liste de précédence existe.
+  #   SI les options ne contiennent pas :sort_key, une clé de 
+  #   classement des items.
+  # 
   # Donc une liste :
   #   - items groupés par @@group_by
   #   - items classés par liste de précédence.
@@ -326,6 +362,9 @@ class Manager
   # Note : on va utiliser un autre system de classement, avec
   # sort et precedence_ids.index(<item id>)
   # La liste classée ser
+  # 
+  # @param [Hash] options Cf. la méthode #choose qui se sert de
+  #               cette méthode.
   def get_choices_with_precedences(options)
     # 
     # La liste au départ
@@ -344,11 +383,19 @@ class Manager
 
     # 
     # Quand on a la liste finale, on peut régler la précédence si
-    # elle est définie
+    # elle est définie OU classer la liste si une clé de classement
+    # est définie (:sort_key et :sort_dir)
     # 
-    if File.exist?(precedence_list)
+    if options[:sort_key]
       list.sort! do |a, b|
-        (precedence_ids.index(a.id)||10000) <=> (precedence_ids.index(b.id)||10000)
+        a.send(options[:sort_key]) <=> b.send(options[:sort_key])
+      end
+      list.reverse! if options[:sort_dir] == 'desc'
+    else
+      if File.exist?(precedence_list)
+        list.sort! do |a, b|
+          (precedence_ids.index(a.id)||10000) <=> (precedence_ids.index(b.id)||10000)
+        end
       end
     end
 
@@ -365,8 +412,11 @@ class Manager
 
   # Filtre la liste +list+ avec le filtre +options[:filter]+ s'il
   # existe.
-  # @return [Array] La liste des éléments filtrés
-  def filter_items_of_list(list, options)
+  # @return [Array] La liste des éléments filtrés (ou pas)
+  # @param [Hash] options Options de renvoi des items
+  # @option options [Hash] filter  Filtre à appliquer à la liste des items à renvoyer
+  # 
+  def filter_items_of_list(list, options = nil)
     return list unless options && options[:filter]
     # 
     # Duplication pour pouvoir le modifier
@@ -518,9 +568,11 @@ class Manager
         # :name4tty Définie comme méthode d'intance
         # 
         case v = item.send(:name4tty)
-        when Symbol then Proc.new { |inst| inst.send(inst.send(:name4tty)) }
+        when Symbol then Proc.new { |inst| inst.send(item.send(:name4tty)) }
         when String then Proc.new { |inst| inst.send(:name4tty) }
         end
+      elsif item.respond_to?(:best_name)
+        Proc.new { |inst| inst.best_name }
       else
         #
         # Aucune définition => deuxième propriété
@@ -623,8 +675,8 @@ class Manager
   end
 
 
-  # --- Implementation Managed Class Methods ---
-
+#################       MANAGED CLASS METHODS      #################
+  
 
   def prepare_class_methods
     my = self
@@ -648,6 +700,9 @@ class Manager
     end
     classe.define_singleton_method 'get' do |item_id|
       data_manager.get(item_id)
+    end
+    classe.define_singleton_method 'last_id' do
+      return my.__last_id
     end
     classe.define_singleton_method 'class_name' do
       my.class_name
@@ -683,6 +738,8 @@ class Manager
     @table[item_id]
   end
 
+  #################       MANAGED ITEM METHODS      #################
+    
   # Add instance methods to managed class (:create, :edit, :display
   # and :remove/:destroy)
   def prepare_instance_methods_of_class
@@ -709,6 +766,31 @@ class Manager
     end
     classe.define_method 'data=' do |value|
       @data = value
+    end
+
+    # @return [String] The best name for the object
+    # @note
+    #   Managed class can define its own best_name method
+    unless classe.instance_methods(false).include?(:best_name)
+      classe.define_method 'best_name' do
+        @best_name ||= begin
+          bn = nil
+          [:designation, :reference, :ref, :pretty_inspect,
+            :titre, :full_name, :fullname
+          ].each do |meth|
+            bn = self.send(meth) and break if respond_to?(meth)
+          end
+          if bn.nil?
+            if classe.instance_methods(false).include?(:inspect)
+              self.inspect
+            else
+              "#{name} (##{id})"
+            end
+          else
+            bn
+          end
+        end
+      end
     end
 
     # 
