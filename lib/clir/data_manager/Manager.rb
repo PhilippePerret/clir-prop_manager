@@ -202,7 +202,7 @@ class Manager
       # 
       # L'utilisateur procède au choix 
       # 
-      choix = Q.select(options[:question], cs, {per_page: 20, filter:true})
+      choix = Q.select(options[:question], cs, {per_page: 20, filter:true, show_help:false})
       choix = classe.new.create if choix == :create
       choix || return # cancel
       choose_precedence_set(choix.id)
@@ -572,7 +572,20 @@ class Manager
         when String then Proc.new { |inst| inst.send(:name4tty) }
         end
       elsif item.respond_to?(:best_name)
-        Proc.new { |inst| inst.best_name }
+        Proc.new do |inst| 
+          begin
+            if inst.is_a?(Clir::GroupedItems)
+              inst.name
+            else
+              inst.best_name
+            end
+          rescue Exception => e
+            puts "-> #{e.message}".rouge
+            puts "Problème avec l'instance #{inst.inspect} qui ne répond pas à :best_name…".rouge
+            puts "POURTANT, #{item.inspect} répondait à :best_name…".rouge
+            inst.send(data_properties[1][:prop])
+          end
+        end
       else
         #
         # Aucune définition => deuxième propriété

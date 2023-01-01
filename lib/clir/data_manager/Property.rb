@@ -90,12 +90,12 @@ class Property
             vals.each { |val| values(instance).set_last(val) }
             vals
           else
-            value = Q.select(question, choices, {default:default_select_value(instance, choices), per_page:choices.count})
+            value = Q.select(question, choices, {default:default_select_value(instance, choices), per_page:choices.count, show_help:false})
             values(instance).set_last(value)
             value
           end
         when :bool
-          Q.select(question, BOOLEAN_VALUES, {default: boolean_default_value(instance), per_page:BOOLEAN_VALUES.count})
+          Q.select(question, BOOLEAN_VALUES, {default: boolean_default_value(instance), per_page:BOOLEAN_VALUES.count, show_help:false})
         else
           puts "Je ne sais pas encore éditer une donnée de type #{type.inspect}.".orange
           sleep 3

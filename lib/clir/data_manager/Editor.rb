@@ -41,7 +41,7 @@ class Editor
       # L'user peut choisir la propriété à définir ou le choix
       # "Enregistrer" pour enregistrer l'instance
       # 
-      case prop = Q.select((options[:question]||(MSG[:define_thing] % instance.class.class_name)).jaune, choices, { per_page:choices.count, default: (index_default unless choices.empty?), filter:true} )
+      case prop = Q.select((options[:question]||(MSG[:define_thing] % instance.class.class_name)).jaune, choices, { per_page:choices.count, default: (index_default unless choices.empty?), filter:true, show_help:false, echo:false} )
       when NilClass 
         break
       when :save
