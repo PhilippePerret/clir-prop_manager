@@ -187,12 +187,13 @@ class Manager
       # 
       choixs = choixs.map do |choix|
         next if choix.nil?
-        choose_precedence_set(choix.id)
         if choix.instance_of?(GroupedItems)
-          choose_in_list_of_grouped_items(choix, options)
+          choix = choose_in_list_of_grouped_items(choix, options)
+          choose_precedence_set("G#{choix.id}")
         else
-          choix
+          choose_precedence_set(choix.id)
         end
+        choix
       end.compact
       # 
       # Instances retournées
@@ -357,14 +358,14 @@ class Manager
   #   - items classés par liste de précédence.
   # @note
   #   La liste de précédence se fiche de savoir s'il s'agit d'un
-  #   item ou d'un groupement d'items 
+  #   item ou d'un groupement d'items. Pour le moment, ça signifie
+  #   que l'item enregistré dans la liste de précédences ne sera pas
+  #   le bon.
   # 
-  # Note : on va utiliser un autre system de classement, avec
-  # sort et precedence_ids.index(<item id>)
-  # La liste classée ser
   # 
   # @param [Hash] options Cf. la méthode #choose qui se sert de
   #               cette méthode.
+  # 
   def get_choices_with_precedences(options)
     # 
     # La liste au départ
@@ -393,6 +394,8 @@ class Manager
       list.reverse! if options[:sort_dir] == 'desc'
     else
       if File.exist?(precedence_list)
+        # puts "Classement par rapport à la liste : #{precedence_list.inspect}".jaune
+        # sleep 4
         list.sort! do |a, b|
           (precedence_ids.index(a.id)||10000) <=> (precedence_ids.index(b.id)||10000)
         end

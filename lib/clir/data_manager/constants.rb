@@ -8,7 +8,7 @@ module DataManager
 
 
   CHOIX_RENONCER  = {name: MSG[:cancel], value:nil}
-  CHOIX_CREATE    = {name: MSG[:create_new], value: :create}
+  CHOIX_CREATE    = {name: MSG[:create_new].bleu, value: :create}
 
 end #/module DataManager
 end #/module Clir

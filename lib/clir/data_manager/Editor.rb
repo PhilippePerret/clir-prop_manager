@@ -125,10 +125,15 @@ class Editor
     real_current_index = 1
 
     # 
-    # Boucle pour récupérer toutes les menus à afficher
+    # Boucle pour récupérer tous les menus à afficher
     # 
     cs = manager.properties.map do |property|
       next if not(property.editable?(instance))
+      # 
+      # Est-ce une propriété requise ? (en fonction ou non de l'instance)
+      # 
+      is_required = property.required?(instance)
+
       real_current_index += 1 if index_default.nil?
       curval = instance.send(property.prop)
       isdef  = curval != nil
@@ -145,7 +150,7 @@ class Editor
       # possibilité d'enregistrer. On en profite aussi, si c'est la
       # première, pour définir l'index par défaut
       # 
-      if property.required?(instance) && not(isdef)
+      if is_required && not(isdef)
         requirement_missing = true
         index_default = real_current_index if index_default.nil?
       end
@@ -159,9 +164,14 @@ class Editor
       # 
       # Couleur en fonction de propriété requise ou non
       # 
-      if property.required?(instance)
-        choix = choix.send(isdef ? :bleu : :orange)
-      end
+      choix = choix.send(isdef ? :bleu : :orange) if is_required
+      #
+      # Marque de propriété requise
+      # 
+      choix = (is_required ? '* '.rouge : '  ') + choix        
+      # 
+      # Le choice à utiliser
+      # 
       {name: choix, value: property}
     end.compact
 
