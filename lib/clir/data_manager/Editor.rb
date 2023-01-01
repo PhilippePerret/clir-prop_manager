@@ -181,7 +181,7 @@ class Editor
     # 
     savable = not(requirement_missing)
     choix_save = {name: MSG[:save].send(savable ? :bleu : :gris), value: :save}
-    choix_save.merge!(disabled: "(#{MESSAGES[:still_required_values]})") if not(savable)
+    choix_save.merge!(disabled: "(#{MESSAGES[:still_required_values]})".gris) if not(savable)
     cs.unshift(choix_save)
     # 
     # On a toujours la possibilité d'annuler l'édition

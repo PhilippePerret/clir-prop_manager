@@ -260,13 +260,18 @@ class Manager
     # 
     # Classement des items si nécessaire
     # 
-    if options.key?(:sort_key)
+    if options.key?(:sort_key) && options[:sort_key]
       sort_key = options[:sort_key]
       if disp_items.first.respond_to?(sort_key)
-        disp_items = disp_items.sort do |a, b|
-          a.send(sort_key) <=> b.send(sort_key)
+        begin
+          disp_items = disp_items.sort do |a, b|
+            a.send(sort_key) <=> b.send(sort_key)
+          end
+          disp_items = disp_items.reverse if options[:sort_dir].to_s == 'asc'
+        rescue Exception => e
+          puts "Classement impossible (avec la clé de classement #{sort_key.inspect}) : #{e.message}".rouge
+          sleep 4
         end
-        disp_items = disp_items.reverse if options[:sort_dir].to_s == 'asc'
       else
         # 
         # Clé inconnue
