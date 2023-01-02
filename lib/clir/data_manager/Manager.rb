@@ -177,7 +177,7 @@ class Manager
       # 
       # L'utilisateur procède aux choix
       # 
-      choixs = Q.multi_select(options[:question], cs, {filter:true, default: selecteds, echo:false})
+      choixs = Q.multi_select(options[:question], cs, {per_page: cs.count, filter:true, default: selecteds, echo:false})
       if choixs.include?(:create)
         choixs.delete(:create)
         choixs << classe.new.create
@@ -255,6 +255,10 @@ class Manager
     # 
     # Filtrage de la liste (s'il le faut)
     # 
+    if not(options.key?(:filter)) && options[:periode]
+      options.merge!(filter: {})
+    end
+    options[:filter].merge!(periode: options[:periode]) if options[:periode]
     disp_items = filter_items_of_list(@items, options)
 
     # 
@@ -728,10 +732,26 @@ class Manager
     classe.define_singleton_method 'class_name' do
       my.class_name
     end
+    classe.define_singleton_method 'count' do
+      get_all.count
+    end
     classe.define_singleton_method 'get_all' do |options = nil|
       my.load_data if not(my.full_loaded?)
       my.filter_items_of_list(my.items, options || {})
     end
+    classe.define_singleton_method 'select' do |filter, options = nil|
+      options ||= {}
+      options.merge!({filter: filter})
+      get_all(options)
+    end
+    classe.class_eval do 
+      class << self
+        alias :filter :select
+      end
+    end
+    # classe.define_singleton_method 'filter' do |options = nil| # alias
+    #   return get_all(options)
+    # end
     classe.define_singleton_method 'display' do |options = nil|
       my.display_items(options)
     end

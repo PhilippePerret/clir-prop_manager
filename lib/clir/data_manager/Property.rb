@@ -65,7 +65,7 @@ class Property
           nval = Q.ask(question, {help:"'---' = nul", default: defvalue})
           nval = nil if nval == '---'
           unless nval.nil?
-            nval = nval.force_encoding('UTF-8').strip
+            nval = nval.to_s.force_encoding('UTF-8').strip
             case type
             when :number, :float
               if nval.sub(/,/,'.').match?(/\./)
@@ -338,8 +338,6 @@ class Property
     when Symbol
       instance.send(if_attr)
     when Proc
-      puts "Test du if_able de #{self.name} par procédure : if_attr.call(instance) = #{if_attr.call(instance).inspect}"
-      puts "Instance testée : #{instance.inspect}"
       if_attr.call(instance)
     when TrueClass, FalseClass
       if_attr
