@@ -164,6 +164,7 @@ class Manager
   # @option options [String]  :question   La question à poser ("Choisir" par défaut)
   # @option options [Boolean] :multi      Si true, on peut choisir plusieurs éléments
   # @option options [Boolean] :create     Si true, on peut créer un nouvel élément
+  # @option options [Boolean] :complete   Si true, on ajoute un menu "Finir" qui retourne :complete
   # @option options [Hash]    :filter     Filtre à appliquer aux valeurs à afficher
   #     Avec le filtre, les instances n'apparaitront pas à l'écran, contrairement à :exclude.
   # @option options [Array]   :exclude    Liste d'identifiants qu'ils faut rendre "inchoisissables".
@@ -228,6 +229,7 @@ class Manager
       choix = Q.select(options[:question], cs, {per_page: 20, filter:true, show_help:false})
       choix = classe.new.create if choix == :create
       choix || return # cancel
+      return :complete if choix == :complete
       choose_precedence_set(choix.id)
       # 
       # Si c'est une liste d'items groupés, il faut encore choisir
@@ -438,8 +440,10 @@ class Manager
     # 
     cs = list.map do |item|
       {name: tty_name_for(item, options), value: item}
-    end + [CHOIX_RENONCER]
+    end
     cs.unshift(CHOIX_CREATE) if options[:create]
+    cs.push({name:MSG[:finir].bleu, value: :complete}) if options[:finir]||options[:complete]
+    cs.push(CHOIX_RENONCER)
 
     return cs
   end

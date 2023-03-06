@@ -678,6 +678,10 @@ Les options sont les suivantes :
 :question 		La question à poser
 :multi 				[Boolean] Si true, on peut choisir plusieurs items
 :create 			[Boolean] Si true, on peut créer un nouvel item
+:complete			[Boolean] Si true, on ajoute un menu "Finir" pour… finir
+							Utile lorsque le choix est appelé en boucle quand on ne 
+							veut pas (ou ne peut pas) utiliser :multi (ci-dessus)
+:finir 				[Boolean] idem
 :filter 			[Hash] Le filtre des éléments (cf. ci-dessous)
 :exclude 			[Array<Ids>] Liste des identifiants à exclure de la liste
 :default 			[Array<Ids>] Quand :multi est true, liste des ids qui

@@ -1,3 +1,7 @@
+* 0.2.3
+
+  - Ajout d'un menu "Finir" (complete) quand on choisit un item
+  
 * 0.2.2
 
   - gestion correcte du LASTID, pour qu'il tienne compte des 
