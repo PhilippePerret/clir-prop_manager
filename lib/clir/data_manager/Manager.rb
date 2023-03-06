@@ -30,10 +30,13 @@ class Manager
   def __new_id
     case save_system
     when :card
-      id = __last_id + 1
+      id = ensure_last_id_by_card(__last_id + 1)
+      # 
+      # On peut enregistrer le nouvel identifiant
+      # 
       File.write(last_id_path, id.to_s)
       return id
-    when :file
+    when :file, :csv
       @last_id || begin 
         load_data
         @last_id
@@ -43,6 +46,25 @@ class Manager
       puts "Je ne sais pas encore gérer le système de sauvegarde :conf.".orange
       raise(ExitSilently)
     end
+  end
+
+  # Méthode qui s'assure de retourner un identifiant qui n'existe
+  # vraiment pas.
+  # 
+  # Il peut arriver que l'utitilisateur ajoute des données à la
+  # main (par fiche), il faut donc s'assurer que cet identifiant est 
+  # bien inusité
+  # 
+  # @param [Integer] sid L'identifiant à vérifier
+  # @return [Integer] L'identifiant libre
+  def ensure_last_id_by_card(sid)
+    case save_format
+    when :yaml
+      sid += 1 while File.exist?(save_location,"#{sid}.yaml")
+    else
+      raise "Je ne sais pas traiter le format #{save_format.inspect}…"
+    end    
+    return sid
   end
 
   # @return [Integer] Last used ID for objet/instance
@@ -859,8 +881,7 @@ class Manager
       when :yaml
         classe.define_method "data_file" do
           @data_file ||= begin
-            mkdir(my.save_location)
-            File.join(my.save_location,"#{id}.yaml")
+            File.join(mkdir(my.save_location),"#{id}.yaml")
           end
         end
         classe.define_method "save" do

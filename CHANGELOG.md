@@ -1,3 +1,9 @@
+* 0.2.2
+
+  - gestion correcte du LASTID, pour qu'il tienne compte des 
+    données (cards) qui peuvent être ajoutées à la main, sans
+    actualisation du fichier consigner ce last-id.
+
 * 0.2.1
 
   - correction nombreux bugs

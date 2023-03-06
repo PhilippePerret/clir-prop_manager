@@ -672,6 +672,38 @@ MaClasseManaged.choose(options = nil)
 # => retourne l'instance choisie
 ~~~
 
+Les options sont les suivantes :
+
+~~~
+:question 		La question à poser
+:multi 				[Boolean] Si true, on peut choisir plusieurs items
+:create 			[Boolean] Si true, on peut créer un nouvel item
+:filter 			[Hash] Le filtre des éléments (cf. ci-dessous)
+:exclude 			[Array<Ids>] Liste des identifiants à exclure de la liste
+:default 			[Array<Ids>] Quand :multi est true, liste des ids qui
+							doivent être sélectionnés par défaut.
+:sort_key 	  Propriété qui doit servir de clé de classement
+:sort_dir 		Direction du classement, 'asc' (défaut) ou 'desc'
+~~~
+
+### Filtre pour `choose`
+
+La propriété `:filter` permet à la méthode `#choose` de choisir seulement un type d’élément. C’est un table avec des clés qui sont les propriétés des items.
+
+Il y a quelques valeurs spéciales :
+
+~~~
+:periode 	[Periode] Définit la période dans laquelle l'item doit se trouver
+					Pour juger de la place de l'item, le filtre se sert d'une propriété
+					:date, :created_at ou :time qui doit donc exister.
+~~~
+
+### Grouper les éléments pour `choose`
+
+On peut aussi grouper les éléments pour les choisir en deux temps. Cf. ci-après.
+
+---
+
 ### Groupement des items (`@@group_by`)
 
 Lorsqu'il y a beaucoup d’items, il peut être plus clair de les grouper pour voir les choisir plus facilement. Ou par exemple, ce peut être simplement une histoire de cohérence sémantique. Par exemple, si l’on veut choisir un livre, on peut vouloir dans un premier temps le choisir simplement par le titre, sans avoir pour chaque livre les versions de support (papier, numérique, …) ou les langues.
