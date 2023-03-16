@@ -60,7 +60,7 @@ class Manager
   def ensure_last_id_by_card(sid)
     case save_format
     when :yaml
-      sid += 1 while File.exist?(save_location,"#{sid}.yaml")
+      sid += 1 while File.exist?(File.join(save_location,"#{sid}.yaml"))
     else
       raise "Je ne sais pas traiter le format #{save_format.inspect}…"
     end    
