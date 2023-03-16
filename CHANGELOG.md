@@ -1,3 +1,7 @@
+* 0.2.4
+
+  - fix mini bug
+  
 * 0.2.3
 
   - Ajout d'un menu "Finir" (complete) quand on choisit un item
