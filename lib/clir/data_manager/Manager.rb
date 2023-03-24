@@ -201,7 +201,7 @@ class Manager
       # 
       # L'utilisateur procède aux choix
       # 
-      choixs = Q.multi_select(options[:question], cs, {per_page: cs.count, filter:true, default: selecteds, echo:false})
+      choixs = Q.multi_select(options[:question], cs, {per_page: (options[:per_page] || cs.count), filter:true, default: selecteds, echo:false})
       if choixs.include?(:create)
         choixs.delete(:create)
         choixs << classe.new.create
