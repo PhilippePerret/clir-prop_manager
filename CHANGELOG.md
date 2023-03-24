@@ -1,3 +1,7 @@
+* 0.3.0
+
+  - limite d'affichage avec `::choose` (`:per_page`)
+  
 * 0.2.4
 
   - fix mini bug

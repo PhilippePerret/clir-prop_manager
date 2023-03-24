@@ -171,6 +171,7 @@ class Manager
   # @option options [Array]   :default    Quand :multi, les valeurs à sélectionner par défaut. C'est une liste d'identifiants.
   # @option options [Symbol]  :sort_key   Clé (propriété) de classement de la liste
   # @option options [String]  :sort_dir   Direction du classement, 'asc' ou 'desc' ('asc' par défaut, si :sort_key est défini)
+  # @option options [Integer] :per_page   Nombre d'éléments affichés dans la fenêtre (par défaut, tous)
   # 
   def choose(**options)
     # 
