@@ -802,7 +802,12 @@ class Manager
   # @return [Any] Any instance with ID +item_id+
   def get(item_id)
     item_id = item_id.to_i
-    @table || load_data
+    @table ||= {}
+    @table[item_id] || begin
+      # La table, même si elle a déjà été chargée, peut peut-être
+      # avoir besoin d'être rechargée
+      load_data
+    end
     @table[item_id]
   end
 
