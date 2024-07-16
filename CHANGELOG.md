@@ -1,3 +1,11 @@
+* 0.3.2
+
+Utilisation des YAML_OPTIONS et de `YAML.safe_load`
+
+* 0.3.1
+
+Nouvelle version pour tenter de passer outre le problème de dépôt.
+
 * 0.3.0
 
   - limite d'affichage avec `::choose` (`:per_page`)

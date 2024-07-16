@@ -1153,7 +1153,7 @@ class Manager
     if File.exist?(save_location)
       case save_format
       when :yaml
-        YAML.load_file(save_location, {aliases:true, symbolize_names: true})
+        YAML.safe_load(IO.read(save_location), **YAML_OPTIONS)
       when :csv
         CSV.read(save_location)
       end  
@@ -1165,7 +1165,7 @@ class Manager
     Dir["#{save_location}/*.#{save_format}"].map do |pth|
       case save_format
       when :yaml
-        YAML.load_file(pth, **{aliases:true, symbolize_names: true})
+        YAML.safe_load(IO.read(pth), **YAML_OPTIONS)
       else
         raise "Format de fiche inconnue : #{save_format}"
       end

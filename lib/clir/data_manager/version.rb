@@ -1,5 +1,5 @@
 module Clir
   module DataManager
-    VERSION = "0.3.0"
+    VERSION = "0.3.2"
   end
 end

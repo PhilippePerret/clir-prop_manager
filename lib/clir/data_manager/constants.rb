@@ -10,5 +10,8 @@ module DataManager
   CHOIX_RENONCER  = {name: MSG[:cancel].orange, value:nil}
   CHOIX_CREATE    = {name: MSG[:create_new].bleu, value: :create}
 
+
+  YAML_OPTIONS = {symbolize_names: true, permitted_classes: [Date, Integer, Symbol, Time]}
+
 end #/module DataManager
 end #/module Clir
